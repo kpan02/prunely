@@ -170,6 +170,36 @@ class PhotoLibraryManager: ObservableObject {
         }
     }
     
+    func loadHighQualityImage(for asset: PHAsset, completion: @escaping (NSImage?) -> Void) {
+        let options = PHImageRequestOptions()
+        options.isSynchronous = false
+        options.deliveryMode = .highQualityFormat
+        options.isNetworkAccessAllowed = true // Allow downloading from iCloud if needed
+        options.resizeMode = .fast
+        
+        imageManager.requestImage(
+            for: asset,
+            targetSize: CGSize(width: 2000, height: 2000),
+            contentMode: .aspectFit,
+            options: options
+        ) { image, info in
+            // Check for errors
+            if let error = info?[PHImageErrorKey] as? Error {
+                print("Error loading image: \(error.localizedDescription)")
+                completion(nil)
+                return
+            }
+            
+            // Check if this is a degraded/low-quality version
+            let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
+            
+            // Only complete with high-quality images or if we got an error
+            if !isDegraded || image == nil {
+                completion(image)
+            }
+        }
+    }
+    
     func getCoverPhoto(for album: PHAssetCollection) -> PHAsset? {
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
@@ -177,5 +207,15 @@ class PhotoLibraryManager: ObservableObject {
         
         let results = PHAsset.fetchAssets(in: album, options: fetchOptions)
         return results.firstObject
+    }
+    
+    func getFileSize(for asset: PHAsset) -> Int64? {
+        let resources = PHAssetResource.assetResources(for: asset)
+        guard let resource = resources.first else { return nil }
+        
+        if let unsignedInt64 = resource.value(forKey: "fileSize") as? CLong {
+            return Int64(unsignedInt64)
+        }
+        return nil
     }
 }

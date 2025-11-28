@@ -147,6 +147,12 @@ class PhotoDecisionStore: ObservableObject {
     
     // MARK: - Debug
     
+    func resetAll() {
+        archivedPhotoIDs.removeAll()
+        trashedPhotoIDs.removeAll()
+        save()
+    }
+    
     var debugDescription: String {
         "PhotoDecisionStore: \(archivedPhotoIDs.count) archived, \(trashedPhotoIDs.count) trashed"
     }

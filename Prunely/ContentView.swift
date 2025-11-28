@@ -22,19 +22,20 @@ enum LibraryTab: String, CaseIterable {
 
 struct ContentView: View {
     @StateObject private var photoLibrary = PhotoLibraryManager()
+    @StateObject private var decisionStore = PhotoDecisionStore()
     @State private var selectedTab: LibraryTab = .months
     
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 // Persistent Top Bar with Tabs
-                TopBar(selectedTab: $selectedTab)
+                TopBar(selectedTab: $selectedTab, decisionStore: decisionStore)
 
                 // Main Content
                 Group {
                     switch photoLibrary.authorizationStatus {
                     case .authorized, .limited:
-                        TabContentView(selectedTab: selectedTab, photoLibrary: photoLibrary)
+                        TabContentView(selectedTab: selectedTab, photoLibrary: photoLibrary, decisionStore: decisionStore)
                         
                     case .denied, .restricted:
                         VStack(spacing: 20) {
@@ -84,6 +85,7 @@ struct ContentView: View {
 
 struct TopBar: View {
     @Binding var selectedTab: LibraryTab
+    @ObservedObject var decisionStore: PhotoDecisionStore
     
     var body: some View {
         HStack {
@@ -109,15 +111,17 @@ struct TopBar: View {
             
             Spacer()
             
-            // Placeholder for symmetry
-            HStack(spacing: 8) {
-                Image(systemName: "leaf.fill")
-                    .foregroundStyle(.clear)
-                Text("Prunely")
-                    .font(.title2)
-                    .fontWeight(.bold)
+            // Reset button (temporary for testing)
+            Button {
+                decisionStore.resetAll()
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.counterclockwise")
+                    Text("Reset")
+                }
             }
-            .opacity(0)
+            .buttonStyle(.bordered)
+            .help("Clear all decisions (archived & trashed)")
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
@@ -163,6 +167,7 @@ struct TabButton: View {
 struct TabContentView: View {
     let selectedTab: LibraryTab
     @ObservedObject var photoLibrary: PhotoLibraryManager
+    @ObservedObject var decisionStore: PhotoDecisionStore
     
     private let columns = [
         GridItem(.adaptive(minimum: 160), spacing: 20)
@@ -173,11 +178,11 @@ struct TabContentView: View {
             VStack(alignment: .leading, spacing: 20) {
                 switch selectedTab {
                 case .months:
-                    MonthsGridView(photoLibrary: photoLibrary, columns: columns)
+                    MonthsGridView(photoLibrary: photoLibrary, decisionStore: decisionStore, columns: columns)
                 case .utilities:
-                    UtilitiesGridView(photoLibrary: photoLibrary, columns: columns)
+                    UtilitiesGridView(photoLibrary: photoLibrary, decisionStore: decisionStore, columns: columns)
                 case .albums:
-                    AlbumsGridView(photoLibrary: photoLibrary, columns: columns)
+                    AlbumsGridView(photoLibrary: photoLibrary, decisionStore: decisionStore, columns: columns)
                 }
             }
             .padding(20)
@@ -187,18 +192,49 @@ struct TabContentView: View {
 
 struct MonthsGridView: View {
     @ObservedObject var photoLibrary: PhotoLibraryManager
+    @ObservedObject var decisionStore: PhotoDecisionStore
     let columns: [GridItem]
     
+    @State private var selectedMonthAlbum: MonthAlbum?
+    @State private var photosToReview: [PHAsset] = []
+    
+    private var albumsWithUnreviewedPhotos: [MonthAlbum] {
+        photoLibrary.monthAlbums.filter { monthAlbum in
+            monthAlbum.photos.contains { asset in
+                !decisionStore.isReviewed(asset.localIdentifier)
+            }
+        }
+    }
+    
     var body: some View {
-        if photoLibrary.monthAlbums.isEmpty {
-            EmptyStateView(title: "No Photos", message: "Your photo library is empty")
+        if albumsWithUnreviewedPhotos.isEmpty {
+            EmptyStateView(title: "All Done!", message: "You've reviewed all photos in your library")
         } else {
             LazyVGrid(columns: columns, spacing: 20) {
-                ForEach(photoLibrary.monthAlbums) { monthAlbum in
-                    NavigationLink(destination: MonthAlbumDetailView(monthAlbum: monthAlbum, photoLibrary: photoLibrary)) {
-                        MonthAlbumThumbnail(monthAlbum: monthAlbum, photoLibrary: photoLibrary)
-                    }
-                    .buttonStyle(.plain)
+                ForEach(albumsWithUnreviewedPhotos) { monthAlbum in
+                    MonthAlbumThumbnail(monthAlbum: monthAlbum, photoLibrary: photoLibrary, decisionStore: decisionStore)
+                        .onTapGesture {
+                            // Snapshot photos once
+                            photosToReview = monthAlbum.photos.filter { asset in
+                                !decisionStore.isReviewed(asset.localIdentifier)
+                            }
+                            selectedMonthAlbum = monthAlbum
+                        }
+                }
+            }
+            .navigationDestination(
+                isPresented: Binding<Bool>(
+                    get: { selectedMonthAlbum != nil },
+                    set: { if !$0 { selectedMonthAlbum = nil } }
+                )
+            ) {
+                if let monthAlbum = selectedMonthAlbum {
+                    PhotoReviewView(
+                        albumTitle: monthAlbum.title,
+                        photos: photosToReview,
+                        photoLibrary: photoLibrary,
+                        decisionStore: decisionStore
+                    )
                 }
             }
         }
@@ -207,19 +243,47 @@ struct MonthsGridView: View {
 
 struct UtilitiesGridView: View {
     @ObservedObject var photoLibrary: PhotoLibraryManager
+    @ObservedObject var decisionStore: PhotoDecisionStore
     let columns: [GridItem]
     
+    @State private var selectedAlbum: PHAssetCollection?
+    @State private var photosToReview: [PHAsset] = []
+    @State private var albumTitle: String = ""
+    
+    private var albumsWithUnreviewedPhotos: [PHAssetCollection] {
+        photoLibrary.utilityAlbums.filter { album in
+            let allPhotos = photoLibrary.fetchPhotos(in: album)
+            return allPhotos.contains { asset in
+                !decisionStore.isReviewed(asset.localIdentifier)
+            }
+        }
+    }
+    
     var body: some View {
-        if photoLibrary.utilityAlbums.isEmpty {
-            EmptyStateView(title: "No Utility Albums", message: "No system albums found")
+        if albumsWithUnreviewedPhotos.isEmpty {
+            EmptyStateView(title: "All Done!", message: "You've reviewed all utility albums")
         } else {
             LazyVGrid(columns: columns, spacing: 20) {
-                ForEach(photoLibrary.utilityAlbums, id: \.localIdentifier) { album in
-                    NavigationLink(destination: AlbumDetailView(album: album, photoLibrary: photoLibrary)) {
-                        AlbumThumbnail(album: album, photoLibrary: photoLibrary)
-                    }
-                    .buttonStyle(.plain)
+                ForEach(albumsWithUnreviewedPhotos, id: \.localIdentifier) { album in
+                    AlbumThumbnail(album: album, photoLibrary: photoLibrary, decisionStore: decisionStore)
+                        .onTapGesture {
+                            // Snapshot photos once
+                            let allPhotos = photoLibrary.fetchPhotos(in: album)
+                            photosToReview = allPhotos.filter { asset in
+                                !decisionStore.isReviewed(asset.localIdentifier)
+                            }
+                            albumTitle = album.localizedTitle ?? "Album"
+                            selectedAlbum = album
+                        }
                 }
+            }
+            .navigationDestination(item: $selectedAlbum) { _ in
+                PhotoReviewView(
+                    albumTitle: albumTitle,
+                    photos: photosToReview,
+                    photoLibrary: photoLibrary,
+                    decisionStore: decisionStore
+                )
             }
         }
     }
@@ -227,19 +291,47 @@ struct UtilitiesGridView: View {
 
 struct AlbumsGridView: View {
     @ObservedObject var photoLibrary: PhotoLibraryManager
+    @ObservedObject var decisionStore: PhotoDecisionStore
     let columns: [GridItem]
     
+    @State private var selectedAlbum: PHAssetCollection?
+    @State private var photosToReview: [PHAsset] = []
+    @State private var albumTitle: String = ""
+    
+    private var albumsWithUnreviewedPhotos: [PHAssetCollection] {
+        photoLibrary.userAlbums.filter { album in
+            let allPhotos = photoLibrary.fetchPhotos(in: album)
+            return allPhotos.contains { asset in
+                !decisionStore.isReviewed(asset.localIdentifier)
+            }
+        }
+    }
+    
     var body: some View {
-        if photoLibrary.userAlbums.isEmpty {
-            EmptyStateView(title: "No Albums", message: "You haven't created any albums yet")
+        if albumsWithUnreviewedPhotos.isEmpty {
+            EmptyStateView(title: "All Done!", message: "You've reviewed all your albums")
         } else {
             LazyVGrid(columns: columns, spacing: 20) {
-                ForEach(photoLibrary.userAlbums, id: \.localIdentifier) { album in
-                    NavigationLink(destination: AlbumDetailView(album: album, photoLibrary: photoLibrary)) {
-                        AlbumThumbnail(album: album, photoLibrary: photoLibrary)
-                    }
-                    .buttonStyle(.plain)
+                ForEach(albumsWithUnreviewedPhotos, id: \.localIdentifier) { album in
+                    AlbumThumbnail(album: album, photoLibrary: photoLibrary, decisionStore: decisionStore)
+                        .onTapGesture {
+                            // Snapshot photos once
+                            let allPhotos = photoLibrary.fetchPhotos(in: album)
+                            photosToReview = allPhotos.filter { asset in
+                                !decisionStore.isReviewed(asset.localIdentifier)
+                            }
+                            albumTitle = album.localizedTitle ?? "Album"
+                            selectedAlbum = album
+                        }
                 }
+            }
+            .navigationDestination(item: $selectedAlbum) { _ in
+                PhotoReviewView(
+                    albumTitle: albumTitle,
+                    photos: photosToReview,
+                    photoLibrary: photoLibrary,
+                    decisionStore: decisionStore
+                )
             }
         }
     }
@@ -268,7 +360,14 @@ struct EmptyStateView: View {
 struct MonthAlbumThumbnail: View {
     let monthAlbum: MonthAlbum
     @ObservedObject var photoLibrary: PhotoLibraryManager
+    @ObservedObject var decisionStore: PhotoDecisionStore
     @State private var coverImage: NSImage?
+    
+    private var unreviewedCount: Int {
+        monthAlbum.photos.filter { asset in
+            !decisionStore.isReviewed(asset.localIdentifier)
+        }.count
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -291,8 +390,8 @@ struct MonthAlbumThumbnail: View {
                 .font(.headline)
                 .lineLimit(1)
             
-            // Photo count
-            Text("\(monthAlbum.photoCount) photos")
+            // Photo count (unreviewed)
+            Text("\(unreviewedCount) photos")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -314,7 +413,15 @@ struct MonthAlbumThumbnail: View {
 struct AlbumThumbnail: View {
     let album: PHAssetCollection
     @ObservedObject var photoLibrary: PhotoLibraryManager
+    @ObservedObject var decisionStore: PhotoDecisionStore
     @State private var coverImage: NSImage?
+    
+    private var unreviewedCount: Int {
+        let allPhotos = photoLibrary.fetchPhotos(in: album)
+        return allPhotos.filter { asset in
+            !decisionStore.isReviewed(asset.localIdentifier)
+        }.count
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -337,8 +444,8 @@ struct AlbumThumbnail: View {
                 .font(.headline)
                 .lineLimit(1)
             
-            // Photo count
-            Text("\(photoLibrary.getPhotoCount(for: album)) photos")
+            // Photo count (unreviewed)
+            Text("\(unreviewedCount) photos")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
