@@ -355,6 +355,7 @@ struct MonthAlbumThumbnail: View {
     @ObservedObject var photoLibrary: PhotoLibraryManager
     @ObservedObject var decisionStore: PhotoDecisionStore
     @State private var coverImage: NSImage?
+    @State private var isHovered = false
     
     private var unreviewedCount: Int {
         monthAlbum.photos.filter { asset in
@@ -382,11 +383,23 @@ struct MonthAlbumThumbnail: View {
             Text(monthAlbum.title)
                 .font(.headline)
                 .lineLimit(1)
+                .padding(.bottom, 0)
             
             // Photo count (unreviewed)
             Text("\(unreviewedCount) photos")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+        }
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(isHovered ? Color.primary.opacity(0.03) : Color.clear)
+        )
+        .scaleEffect(isHovered ? 1.02 : 1.0)
+        .shadow(color: .black.opacity(isHovered ? 0.15 : 0), radius: 10, x: 0, y: 4)
+        .animation(.easeInOut(duration: 0.12), value: isHovered)
+        .onHover { hovering in
+            isHovered = hovering
         }
         .onAppear {
             loadCoverImage()
@@ -408,6 +421,7 @@ struct AlbumThumbnail: View {
     @ObservedObject var photoLibrary: PhotoLibraryManager
     @ObservedObject var decisionStore: PhotoDecisionStore
     @State private var coverImage: NSImage?
+    @State private var isHovered = false
     
     private var unreviewedCount: Int {
         let allPhotos = photoLibrary.fetchPhotos(in: album)
@@ -436,11 +450,23 @@ struct AlbumThumbnail: View {
             Text(album.localizedTitle ?? "Untitled")
                 .font(.headline)
                 .lineLimit(1)
+                .padding(.bottom, 0)
             
             // Photo count (unreviewed)
             Text("\(unreviewedCount) photos")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+        }
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(isHovered ? Color.primary.opacity(0.03) : Color.clear)
+        )
+        .scaleEffect(isHovered ? 1.02 : 1.0)
+        .shadow(color: .black.opacity(isHovered ? 0.15 : 0), radius: 10, x: 0, y: 4)
+        .animation(.easeInOut(duration: 0.12), value: isHovered)
+        .onHover { hovering in
+            isHovered = hovering
         }
         .onAppear {
             loadCoverImage()

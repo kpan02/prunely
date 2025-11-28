@@ -64,8 +64,9 @@ class PhotoLibraryManager: ObservableObject {
     private func fetchMonthAlbums() {
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        fetchOptions.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
         
-        let results = PHAsset.fetchAssets(with: .image, options: fetchOptions)
+        let results = PHAsset.fetchAssets(with: fetchOptions)
         
         // Group photos by month
         var groupedPhotos: [String: (date: Date, photos: [PHAsset])] = [:]
@@ -109,8 +110,10 @@ class PhotoLibraryManager: ObservableObject {
             options: nil
         )
         smartAlbums.enumerateObjects { collection, _, _ in
-            // Only include albums that have photos
-            let assetCount = PHAsset.fetchAssets(in: collection, options: nil).count
+            // Only include albums that have photos (images only)
+            let imageFetchOptions = PHFetchOptions()
+            imageFetchOptions.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
+            let assetCount = PHAsset.fetchAssets(in: collection, options: imageFetchOptions).count
             if assetCount > 0 {
                 utilities.append(collection)
             }
@@ -127,7 +130,9 @@ class PhotoLibraryManager: ObservableObject {
             if collection.assetCollectionSubtype == .albumCloudShared {
                 return
             }
-            let assetCount = PHAsset.fetchAssets(in: collection, options: nil).count
+            let imageFetchOptions = PHFetchOptions()
+            imageFetchOptions.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
+            let assetCount = PHAsset.fetchAssets(in: collection, options: imageFetchOptions).count
             if assetCount > 0 {
                 user.append(collection)
             }
@@ -140,6 +145,7 @@ class PhotoLibraryManager: ObservableObject {
     func fetchPhotos(in album: PHAssetCollection) -> [PHAsset] {
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        fetchOptions.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
         
         let results = PHAsset.fetchAssets(in: album, options: fetchOptions)
         
