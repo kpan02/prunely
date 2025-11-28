@@ -11,7 +11,8 @@ import AppKit
 @MainActor
 class PhotoLibraryManager: ObservableObject {
     @Published var authorizationStatus: PHAuthorizationStatus = .notDetermined
-    @Published var albums: [PHAssetCollection] = []
+    @Published var utilityAlbums: [PHAssetCollection] = []
+    @Published var userAlbums: [PHAssetCollection] = []
     
     private let imageManager = PHCachingImageManager()
     
@@ -35,36 +36,42 @@ class PhotoLibraryManager: ObservableObject {
     }
     
     func fetchAlbums() {
-        var allAlbums: [PHAssetCollection] = []
+        var utilities: [PHAssetCollection] = []
+        var user: [PHAssetCollection] = []
         
         // Fetch utility albums (Recents, Favorites, Screenshots, etc.)
-        let utilityAlbums = PHAssetCollection.fetchAssetCollections(
+        let smartAlbums = PHAssetCollection.fetchAssetCollections(
             with: .smartAlbum,
             subtype: .any,
             options: nil
         )
-        utilityAlbums.enumerateObjects { collection, _, _ in
+        smartAlbums.enumerateObjects { collection, _, _ in
             // Only include albums that have photos
             let assetCount = PHAsset.fetchAssets(in: collection, options: nil).count
             if assetCount > 0 {
-                allAlbums.append(collection)
+                utilities.append(collection)
             }
         }
         
-        // Fetch user-created albums
-        let userAlbums = PHAssetCollection.fetchAssetCollections(
+        // Fetch user-created albums (excluding shared albums)
+        let albums = PHAssetCollection.fetchAssetCollections(
             with: .album,
             subtype: .any,
             options: nil
         )
-        userAlbums.enumerateObjects { collection, _, _ in
+        albums.enumerateObjects { collection, _, _ in
+            // Skip shared albums
+            if collection.assetCollectionSubtype == .albumCloudShared {
+                return
+            }
             let assetCount = PHAsset.fetchAssets(in: collection, options: nil).count
             if assetCount > 0 {
-                allAlbums.append(collection)
+                user.append(collection)
             }
         }
         
-        self.albums = allAlbums
+        self.utilityAlbums = utilities
+        self.userAlbums = user
     }
     
     func fetchPhotos(in album: PHAssetCollection) -> [PHAsset] {

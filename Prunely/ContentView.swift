@@ -67,17 +67,50 @@ struct AlbumsGridView: View {
     
     var body: some View {
         ScrollView {
-            LazyVGrid(columns: columns, spacing: 20) {
-                ForEach(photoLibrary.albums, id: \.localIdentifier) { album in
-                    NavigationLink(destination: AlbumDetailView(album: album, photoLibrary: photoLibrary)) {
-                        AlbumThumbnail(album: album, photoLibrary: photoLibrary)
+            VStack(alignment: .leading, spacing: 30) {
+                // Utilities Section
+                if !photoLibrary.utilityAlbums.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Utilities")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                        
+                        LazyVGrid(columns: columns, spacing: 20) {
+                            ForEach(photoLibrary.utilityAlbums, id: \.localIdentifier) { album in
+                                NavigationLink(destination: AlbumDetailView(album: album, photoLibrary: photoLibrary)) {
+                                    AlbumThumbnail(album: album, photoLibrary: photoLibrary)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
                     }
-                    .buttonStyle(.plain)
+                }
+                
+                // User Albums Section
+                if !photoLibrary.userAlbums.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        // Add extra top padding and a dividing line before this section
+                        Divider()
+                            .padding(.vertical, 24)
+                        Text("Albums")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .fontWeight(.semibold)
+                        
+                        LazyVGrid(columns: columns, spacing: 20) {
+                            ForEach(photoLibrary.userAlbums, id: \.localIdentifier) { album in
+                                NavigationLink(destination: AlbumDetailView(album: album, photoLibrary: photoLibrary)) {
+                                    AlbumThumbnail(album: album, photoLibrary: photoLibrary)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
                 }
             }
             .padding(20)
         }
-        .navigationTitle("Albums")
+        .navigationTitle("Library")
     }
 }
 
