@@ -96,12 +96,18 @@ struct PhotoReviewView: View {
                     }
                 } else {
                     photoArea
+                        .padding(.bottom, 15)
                     
-                    // Filmstrip
+                    Divider()
+                        .padding(.top, 5)
+                    
                     filmstrip
                     
-                    // Controls
+                    Divider()
+                        .padding(.bottom, 5)
+                    
                     controlsBar
+                        .padding(.bottom, 5)
                 }
             }
             
@@ -111,6 +117,7 @@ struct PhotoReviewView: View {
             }
         }
         .frame(minWidth: 800, minHeight: 600)
+        .navigationBarBackButtonHidden(true)
         .onAppear {
             initializeCurrentPhoto()
             loadCurrentImage()
@@ -162,26 +169,20 @@ struct PhotoReviewView: View {
             }
             
             Spacer()
-            
+        }
+        .overlay(
             Text(albumTitle)
-                .font(.headline)
-            
-            Spacer()
-            
-            // Hide reviewed toggle
-            Toggle(isOn: $hideReviewed) {
-                Text("Hide reviewed")
-                    .font(.subheadline)
-            }
-            .toggleStyle(.checkbox)
-            .help("Show only unreviewed photos")
-            
+                .font(.system(size: 18, weight: .semibold))
+        )
+        .overlay(alignment: .trailing) {
+            // Progress text - right aligned
             Text(progressText)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .frame(minWidth: 140, alignment: .trailing)
         }
-        .padding()
+        .padding(.horizontal)
+        .padding(.vertical, 8)
         .background(.ultraThinMaterial)
     }
     
@@ -307,60 +308,77 @@ struct PhotoReviewView: View {
     }
     
     private var controlsBar: some View {
-        HStack(spacing: 20) {
-            // Navigation: Left = Previous
-            Button {
-                goToPrevious()
-            } label: {
-                Label("Back", systemImage: "chevron.left")
-                    .frame(minWidth: 80)
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.large)
-            .keyboardShortcut(.leftArrow, modifiers: [])
-            
-            Spacer()
-            
-            // Decisions in the middle
-            VStack(spacing: 8) {
+        ZStack {
+            // Navigation and decision buttons - centered
+            HStack(spacing: 16) {
+                // Navigation: Back Button
                 Button {
-                    handleAccept()
+                    goToPrevious()
                 } label: {
-                    Label("Keep", systemImage: "checkmark.circle")
-                        .frame(minWidth: 120)
+                    HStack(spacing: 6) {
+                        Image(systemName: "chevron.left")
+                        Text("Back")
+                    }
+                    .frame(width: 68, height: 44, alignment: .center)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.green)
+                .buttonStyle(.bordered)
                 .controlSize(.large)
-                .keyboardShortcut(.upArrow, modifiers: [])
+                .keyboardShortcut(.leftArrow, modifiers: [])
                 
-                Button {
-                    handleDelete()
-                } label: {
-                    Label("Delete", systemImage: "trash")
-                        .frame(minWidth: 120)
+                // Keep and Delete Buttons
+                VStack(spacing: 8) {
+                    Button {
+                        handleAccept()
+                    } label: {
+                        Label("Keep  ", systemImage: "arrow.up")
+                            .frame(minWidth: 120)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.green)
+                    .controlSize(.large)
+                    .keyboardShortcut(.upArrow, modifiers: [])
+                    
+                    Button {
+                        handleDelete()
+                    } label: {
+                        Label("Delete", systemImage: "arrow.down")
+                            .frame(minWidth: 120)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Color.red)
+                    .controlSize(.large)
+                    .keyboardShortcut(.downArrow, modifiers: [])
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(Color.red)
+                
+                // Navigation: Next Button
+                Button {
+                    goToNext()
+                } label: {
+                    HStack(spacing: 6) {
+                        Text("Next")
+                        Image(systemName: "chevron.right")
+                    }
+                    .frame(width: 68, height: 44, alignment: .center)
+                }
+                .buttonStyle(.bordered)
                 .controlSize(.large)
-                .keyboardShortcut(.downArrow, modifiers: [])
+                .keyboardShortcut(.rightArrow, modifiers: [])
             }
             
-            Spacer()
-            
-            // Navigation: Right = Next
-            Button {
-                goToNext()
-            } label: {
-                Label("Next", systemImage: "chevron.right")
-                    .frame(minWidth: 80)
+            // Hide reviewed toggle - bottom right
+            HStack {
+                Spacer()
+                Toggle(isOn: $hideReviewed) {
+                    Text("Hide Reviewed Photos    ")
+                        .font(.subheadline)
+                }
+                .toggleStyle(.checkbox)
+                .help("Show only unreviewed photos")
             }
-            .buttonStyle(.bordered)
-            .controlSize(.large)
-            .keyboardShortcut(.rightArrow, modifiers: [])
         }
         .padding()
         .background(Color.white)
+
         // Hidden button for spacebar to clear decision
         .background(
             Button("") { handleClearDecision() }
@@ -761,3 +779,4 @@ struct CompletionView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
+
