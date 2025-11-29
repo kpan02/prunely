@@ -7,15 +7,15 @@ import SwiftUI
 import Photos
 
 enum LibraryTab: String, CaseIterable {
-    case months = "Months"
-    case utilities = "Utilities"
+    case media = "Media"
     case albums = "Albums"
+    case months = "Months"
     
     var icon: String {
         switch self {
-        case .months: return "calendar"
-        case .utilities: return "folder.fill"
+        case .media: return "folder.fill"
         case .albums: return "photo.on.rectangle"
+        case .months: return "calendar"
         }
     }
 }
@@ -23,7 +23,7 @@ enum LibraryTab: String, CaseIterable {
 struct ContentView: View {
     @StateObject private var photoLibrary = PhotoLibraryManager()
     @StateObject private var decisionStore = PhotoDecisionStore()
-    @State private var selectedTab: LibraryTab = .months
+    @State private var selectedTab: LibraryTab = .media
     
     var body: some View {
         NavigationStack {
@@ -177,12 +177,12 @@ struct TabContentView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 switch selectedTab {
-                case .months:
-                    MonthsGridView(photoLibrary: photoLibrary, decisionStore: decisionStore, columns: columns)
-                case .utilities:
-                    UtilitiesGridView(photoLibrary: photoLibrary, decisionStore: decisionStore, columns: columns)
+                case .media:
+                    MediaGridView(photoLibrary: photoLibrary, decisionStore: decisionStore, columns: columns)
                 case .albums:
                     AlbumsGridView(photoLibrary: photoLibrary, decisionStore: decisionStore, columns: columns)
+                case .months:
+                    MonthsGridView(photoLibrary: photoLibrary, decisionStore: decisionStore, columns: columns)
                 }
             }
             .padding(20)
@@ -240,7 +240,7 @@ struct MonthsGridView: View {
     }
 }
 
-struct UtilitiesGridView: View {
+struct MediaGridView: View {
     @ObservedObject var photoLibrary: PhotoLibraryManager
     @ObservedObject var decisionStore: PhotoDecisionStore
     let columns: [GridItem]
@@ -258,7 +258,7 @@ struct UtilitiesGridView: View {
     
     var body: some View {
         if albumsWithUnreviewedPhotos.isEmpty {
-            EmptyStateView(title: "All Done!", message: "You've reviewed all utility albums")
+            EmptyStateView(title: "All Done!", message: "You've reviewed all media albums")
         } else {
             LazyVGrid(columns: columns, spacing: 20) {
                 ForEach(albumsWithUnreviewedPhotos, id: \.localIdentifier) { album in
