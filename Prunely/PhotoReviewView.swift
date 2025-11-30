@@ -150,16 +150,14 @@ struct PhotoReviewView: View {
             Button {
                 dismiss()
             } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "chevron.left")
-                    Text("Back")
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(isBackHovered ? Color.primary.opacity(0.06) : .clear)
-                )
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(.primary)
+                    .frame(width: 32, height: 32)
+                    .background(
+                        Circle()
+                            .fill(Color.primary.opacity(isBackHovered ? 0.13 : 0.07))
+                    )
             }
             .buttonStyle(.plain)
             .onHover { hovering in
@@ -183,7 +181,7 @@ struct PhotoReviewView: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
-        .background(.ultraThinMaterial)
+        .background(.white)
     }
     
     private func metadataBar(metadata: PhotoMetadata) -> some View {
@@ -369,7 +367,7 @@ struct PhotoReviewView: View {
             HStack {
                 Spacer()
                 Toggle(isOn: $hideReviewed) {
-                    Text("Hide Reviewed Photos    ")
+                    Text("Hide Reviewed Photos   ")
                         .font(.subheadline)
                 }
                 .toggleStyle(.checkbox)

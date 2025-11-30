@@ -6,31 +6,66 @@
 import SwiftUI
 import Photos
 
-enum LibraryTab: String, CaseIterable {
+enum SidebarTab: String, CaseIterable {
+    // Library section
     case media = "Media"
     case albums = "Albums"
     case months = "Months"
+    // Utilities section
+    case trash = "Trash"
+    case dashboard = "Dashboard"
+    case archive = "Archive"
+    case help = "Help"
     
     var icon: String {
         switch self {
         case .media: return "folder.fill"
         case .albums: return "photo.on.rectangle"
         case .months: return "calendar"
+        case .trash: return "trash"
+        case .dashboard: return "chart.bar.fill"
+        case .archive: return "archivebox.fill"
+        case .help: return "questionmark.circle"
         }
     }
+    
+    var section: SidebarSection {
+        switch self {
+        case .media, .albums, .months:
+            return .library
+        case .trash, .dashboard, .archive, .help:
+            return .utilities
+        }
+    }
+    
+    static var libraryTabs: [SidebarTab] {
+        allCases.filter { $0.section == .library }
+    }
+    
+    static var utilityTabs: [SidebarTab] {
+        allCases.filter { $0.section == .utilities }
+    }
+}
+
+enum SidebarSection: String {
+    case library = "Library"
+    case utilities = "Utilities"
 }
 
 struct ContentView: View {
     @StateObject private var photoLibrary = PhotoLibraryManager()
     @StateObject private var decisionStore = PhotoDecisionStore()
-    @State private var selectedTab: LibraryTab = .media
+    @State private var selectedTab: SidebarTab = .media
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Persistent Top Bar with Tabs
-                TopBar(selectedTab: $selectedTab, decisionStore: decisionStore)
-
+            HStack(spacing: 0) {
+                // Custom Sidebar
+                Sidebar(selectedTab: $selectedTab, decisionStore: decisionStore)
+                
+                // Divider between sidebar and content
+                Divider()
+                
                 // Main Content
                 Group {
                     switch photoLibrary.authorizationStatus {
@@ -70,8 +105,9 @@ struct ContentView: View {
                         Text("Unknown status")
                     }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .frame(minWidth: 600, minHeight: 400)
+            .frame(minWidth: 700, minHeight: 450)
             .toolbar(.hidden)
         }
         .onAppear {
@@ -83,81 +119,108 @@ struct ContentView: View {
     }
 }
 
-struct TopBar: View {
-    @Binding var selectedTab: LibraryTab
+// MARK: - Custom Sidebar
+
+struct Sidebar: View {
+    @Binding var selectedTab: SidebarTab
     @ObservedObject var decisionStore: PhotoDecisionStore
     
     var body: some View {
-        HStack {
-            // App name
-            HStack(spacing: 8) {
-                Image(systemName: "leaf.fill")
-                    .foregroundStyle(.green)
-                Text("Prunely")
-                    .font(.title2)
-                    .fontWeight(.bold)
-            }
+        VStack(alignment: .leading, spacing: 0) {
+            // Library Section
+            SidebarSectionHeader(title: "Library")
             
-            Spacer()
-            
-            // Tab buttons
-            HStack(spacing: 4) {
-                ForEach(LibraryTab.allCases, id: \.self) { tab in
-                    TabButton(tab: tab, isSelected: selectedTab == tab) {
+            VStack(spacing: 2) {
+                ForEach(SidebarTab.libraryTabs, id: \.self) { tab in
+                    SidebarItem(tab: tab, isSelected: selectedTab == tab) {
                         selectedTab = tab
                     }
                 }
             }
+            .padding(.horizontal, 10)
+            
+            // Utilities Section
+            SidebarSectionHeader(title: "Utilities")
+                .padding(.top, 20)
+            
+            VStack(spacing: 2) {
+                ForEach(SidebarTab.utilityTabs, id: \.self) { tab in
+                    SidebarItem(tab: tab, isSelected: selectedTab == tab) {
+                        selectedTab = tab
+                    }
+                }
+            }
+            .padding(.horizontal, 10)
             
             Spacer()
             
-            // Reset button (temporary for testing)
+            // Reset button at bottom (for testing)
             Button {
                 decisionStore.resetAll()
             } label: {
-                HStack(spacing: 4) {
+                HStack(spacing: 6) {
                     Image(systemName: "arrow.counterclockwise")
-                    Text("Reset")
+                        .font(.system(size: 12))
+                    Text("Reset All")
+                        .font(.system(size: 13))
                 }
+                .foregroundStyle(.secondary)
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(.plain)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
             .help("Clear all decisions (archived & trashed)")
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
-        .background(.ultraThinMaterial)
-        .overlay(alignment: .bottom) {
-            Divider()
-        }
+        .padding(.top, 12)
+        .frame(width: 180)
+        .background(Color(nsColor: .windowBackgroundColor).opacity(0.5))
     }
 }
 
-struct TabButton: View {
-    let tab: LibraryTab
+struct SidebarSectionHeader: View {
+    let title: String
+    
+    var body: some View {
+        Text(title)
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(.secondary)
+            .textCase(.uppercase)
+            .tracking(0.5)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 6)
+    }
+}
+
+struct SidebarItem: View {
+    let tab: SidebarTab
     let isSelected: Bool
     let action: () -> Void
     @State private var isHovered = false
     
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 6) {
+            HStack(spacing: 10) {
                 Image(systemName: tab.icon)
-                    .font(.system(size: 12))
+                    .font(.system(size: 14))
+                    .frame(width: 20)
                 Text(tab.rawValue)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
+                Spacer()
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 6)
+            .padding(.vertical, 8)
             .background(
-                isSelected ? Color.accentColor.opacity(0.15) :
-                isHovered ? Color.primary.opacity(0.08) : Color.clear
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(
+                        isSelected ? Color.accentColor.opacity(0.15) :
+                        isHovered ? Color.primary.opacity(0.06) : Color.clear
+                    )
             )
             .foregroundStyle(isSelected ? Color.accentColor : Color.primary)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
         }
         .buttonStyle(.plain)
         .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.15)) {
+            withAnimation(.easeInOut(duration: 0.12)) {
                 isHovered = hovering
             }
         }
@@ -165,7 +228,7 @@ struct TabButton: View {
 }
 
 struct TabContentView: View {
-    let selectedTab: LibraryTab
+    let selectedTab: SidebarTab
     @ObservedObject var photoLibrary: PhotoLibraryManager
     @ObservedObject var decisionStore: PhotoDecisionStore
     
@@ -177,16 +240,57 @@ struct TabContentView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 switch selectedTab {
+                // Library tabs
                 case .media:
                     MediaGridView(photoLibrary: photoLibrary, decisionStore: decisionStore, columns: columns)
                 case .albums:
                     AlbumsGridView(photoLibrary: photoLibrary, decisionStore: decisionStore, columns: columns)
                 case .months:
                     MonthsGridView(photoLibrary: photoLibrary, decisionStore: decisionStore, columns: columns)
+                // Utility tabs
+                case .trash:
+                    UtilityPlaceholderView(title: "Trash", icon: "trash", description: "Photos marked for deletion will appear here")
+                case .dashboard:
+                    UtilityPlaceholderView(title: "Dashboard", icon: "chart.bar.fill", description: "View your photo library statistics")
+                case .archive:
+                    UtilityPlaceholderView(title: "Archive", icon: "archivebox.fill", description: "Photos marked as kept will appear here")
+                case .help:
+                    UtilityPlaceholderView(title: "Help", icon: "questionmark.circle", description: "Get help using Prunely")
                 }
             }
             .padding(20)
         }
+    }
+}
+
+// MARK: - Utility Placeholder View
+
+struct UtilityPlaceholderView: View {
+    let title: String
+    let icon: String
+    let description: String
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: icon)
+                .font(.system(size: 56))
+                .foregroundStyle(.secondary.opacity(0.6))
+            
+            Text(title)
+                .font(.title2)
+                .fontWeight(.semibold)
+            
+            Text(description)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            
+            Text("Coming Soon")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .padding(.top, 8)
+        }
+        .frame(maxWidth: .infinity, minHeight: 300)
     }
 }
 
