@@ -13,12 +13,16 @@ struct PhotoDecisions: Codable {
     var archivedPhotoIDs: Set<String>
     var trashedPhotoIDs: Set<String>
     var lastUpdated: Date
+    var totalPhotosDeleted: Int?
+    var totalStorageFreed: Int64?
     
     static var empty: PhotoDecisions {
         PhotoDecisions(
             archivedPhotoIDs: [],
             trashedPhotoIDs: [],
-            lastUpdated: Date()
+            lastUpdated: Date(),
+            totalPhotosDeleted: 0,
+            totalStorageFreed: 0
         )
     }
 }
@@ -27,6 +31,8 @@ struct PhotoDecisions: Codable {
 class PhotoDecisionStore: ObservableObject {
     @Published private(set) var archivedPhotoIDs: Set<String> = []
     @Published private(set) var trashedPhotoIDs: Set<String> = []
+    @Published private(set) var totalPhotosDeleted: Int = 0
+    @Published private(set) var totalStorageFreed: Int64 = 0
     
     private let fileURL: URL
     
@@ -68,8 +74,11 @@ class PhotoDecisionStore: ObservableObject {
     
     /// Clear all trashed IDs after actual deletion
     /// Also performs orphan cleanup on archived IDs
-    func emptyTrash() {
+    /// Updates deletion statistics
+    func emptyTrash(photosDeleted: Int, storageFreed: Int64) {
         trashedPhotoIDs.removeAll()
+        totalPhotosDeleted += photosDeleted
+        totalStorageFreed += storageFreed
         cleanupOrphanedIDs()
         save()
     }
@@ -94,7 +103,9 @@ class PhotoDecisionStore: ObservableObject {
         let decisions = PhotoDecisions(
             archivedPhotoIDs: archivedPhotoIDs,
             trashedPhotoIDs: trashedPhotoIDs,
-            lastUpdated: Date()
+            lastUpdated: Date(),
+            totalPhotosDeleted: totalPhotosDeleted,
+            totalStorageFreed: totalStorageFreed
         )
         
         do {
@@ -121,6 +132,9 @@ class PhotoDecisionStore: ObservableObject {
             let decisions = try decoder.decode(PhotoDecisions.self, from: data)
             self.archivedPhotoIDs = decisions.archivedPhotoIDs
             self.trashedPhotoIDs = decisions.trashedPhotoIDs
+            // Handle backward compatibility: if stats don't exist in old data, default to 0
+            self.totalPhotosDeleted = decisions.totalPhotosDeleted ?? 0
+            self.totalStorageFreed = decisions.totalStorageFreed ?? 0
         } catch {
             print("Failed to load decisions: \(error)")
             // Start fresh if file is corrupted
@@ -150,6 +164,8 @@ class PhotoDecisionStore: ObservableObject {
     func resetAll() {
         archivedPhotoIDs.removeAll()
         trashedPhotoIDs.removeAll()
+        totalPhotosDeleted = 0
+        totalStorageFreed = 0
         save()
     }
     

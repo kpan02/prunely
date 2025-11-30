@@ -12,12 +12,17 @@ struct TrashGridView: View {
     let columns: [GridItem]
     
     @State private var trashedPhotos: [PHAsset] = []
+    @State private var totalStorage: Int64 = 0
     @State private var isLoading = true
     @State private var showEmptyTrashConfirmation = false
     @State private var selectedPhoto: PHAsset?
     
     private var photoCount: Int {
         trashedPhotos.count
+    }
+    
+    private var formattedStorage: String {
+        formatFileSize(totalStorage)
     }
     
     var body: some View {
@@ -29,9 +34,16 @@ struct TrashGridView: View {
                         .font(.system(size: 28, weight: .semibold))
                     
                     if !isLoading {
-                        Text("\(photoCount) \(photoCount == 1 ? "photo" : "photos")")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        HStack(spacing: 8) {
+                            Text("\(photoCount) \(photoCount == 1 ? "photo" : "photos")")
+                            if totalStorage > 0 {
+                                Text("•")
+                                    .foregroundStyle(.secondary.opacity(0.5))
+                                Text(formattedStorage)
+                            }
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                     }
                 }
                 
@@ -120,12 +132,22 @@ struct TrashGridView: View {
         
         guard !trashedIDs.isEmpty else {
             trashedPhotos = []
+            totalStorage = 0
             isLoading = false
             return
         }
         
         let result = photoLibrary.fetchPhotos(byIDs: trashedIDs)
         trashedPhotos = result.photos
+        
+        // Calculate total storage
+        var storage: Int64 = 0
+        for asset in trashedPhotos {
+            if let fileSize = photoLibrary.getFileSize(for: asset) {
+                storage += fileSize
+            }
+        }
+        totalStorage = storage
         
         // Clean up orphaned IDs from decision store
         if !result.orphanedIDs.isEmpty {
@@ -152,16 +174,34 @@ struct TrashGridView: View {
         loadTrashedPhotos()
     }
     
+    private func formatFileSize(_ bytes: Int64) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useMB, .useGB]
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: bytes)
+    }
+    
     private func emptyTrash() {
+        // Calculate statistics BEFORE deletion (while assets still exist)
+        let photosDeleted = trashedPhotos.count
+        var storageFreed: Int64 = 0
+        
+        // Sum up file sizes for all photos being deleted
+        for asset in trashedPhotos {
+            if let fileSize = photoLibrary.getFileSize(for: asset) {
+                storageFreed += fileSize
+            }
+        }
+        
         // Permanently delete all trashed photos
         let assetsToDelete = trashedPhotos
         PHPhotoLibrary.shared().performChanges({
             PHAssetChangeRequest.deleteAssets(assetsToDelete as NSArray)
         }, completionHandler: { success, error in
             if success {
-                // Clear the trashed IDs from decision store
+                // Update statistics in decision store after successful deletion
                 Task { @MainActor in
-                    decisionStore.emptyTrash()
+                    decisionStore.emptyTrash(photosDeleted: photosDeleted, storageFreed: storageFreed)
                 }
             } else if let error = error {
                 print("Error deleting photos: \(error.localizedDescription)")
