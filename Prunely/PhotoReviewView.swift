@@ -117,6 +117,7 @@ struct PhotoReviewView: View {
             }
         }
         .frame(minWidth: 800, minHeight: 600)
+        .background(Color(hex: 0xFEFFFC))
         .navigationBarBackButtonHidden(true)
         .onAppear {
             initializeCurrentPhoto()
@@ -146,6 +147,7 @@ struct PhotoReviewView: View {
     // MARK: - View Components
     
     private var topBar: some View {
+        // Back button
         HStack {
             Button {
                 dismiss()
@@ -168,20 +170,22 @@ struct PhotoReviewView: View {
             
             Spacer()
         }
+
+        // Album title
         .overlay(
             Text(albumTitle)
-                .font(.system(size: 18, weight: .semibold))
+                .font(.system(size: 24, weight: .semibold))
         )
+
+        // Progress text 
         .overlay(alignment: .trailing) {
-            // Progress text - right aligned
             Text(progressText)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .frame(minWidth: 140, alignment: .trailing)
         }
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-        .background(.white)
+        .padding(.horizontal, 12)
+        .padding(.top, 8)
     }
     
     private func metadataBar(metadata: PhotoMetadata) -> some View {
@@ -190,7 +194,7 @@ struct PhotoReviewView: View {
             
             // Decision status badge
             if let status = currentDecisionStatus {
-                HStack(spacing: 6) {
+                HStack(spacing: 5) {
                     Image(systemName: status == .kept ? "checkmark.circle.fill" : "trash.fill")
                         .font(.caption)
                     Text(status == .kept ? "Marked as Keep" : "Marked as Delete")
@@ -206,7 +210,7 @@ struct PhotoReviewView: View {
             }
             
             // Date
-            HStack(spacing: 10) {
+            HStack(spacing: 5) {
                 Image(systemName: "calendar")
                     .font(.caption)
                 Text(metadata.formattedDate)
@@ -215,7 +219,7 @@ struct PhotoReviewView: View {
             
             // File size
             if let size = metadata.formattedSize {
-                HStack(spacing: 10) {
+                HStack(spacing: 5) {
                     Image(systemName: "doc.fill")
                         .font(.caption)
                     Text(size)
@@ -225,7 +229,8 @@ struct PhotoReviewView: View {
             Spacer()
         }
         .padding(.horizontal)
-        .padding(.vertical, 8)
+        .padding(.top, 4)
+        .padding(.bottom, 12)
         .background(Color.white)
         .foregroundStyle(.secondary)
     }
@@ -286,7 +291,7 @@ struct PhotoReviewView: View {
                 .padding(.vertical, 8)
             }
             .frame(height: 80)
-            .background(Color(nsColor: .windowBackgroundColor))
+            .background(Color(hex: 0xFEFFFC))
             .onChange(of: currentPhotoId) { _, newId in
                 if let newId = newId {
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -367,7 +372,7 @@ struct PhotoReviewView: View {
             HStack {
                 Spacer()
                 Toggle(isOn: $hideReviewed) {
-                    Text("Hide Reviewed Photos   ")
+                    Text("Hide Reviewed Photos  ")
                         .font(.subheadline)
                 }
                 .toggleStyle(.checkbox)

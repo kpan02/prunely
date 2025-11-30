@@ -6,6 +6,20 @@
 import SwiftUI
 import Photos
 
+// MARK: - Color Extension for Hex Support
+
+extension Color {
+    init(hex: UInt, opacity: Double = 1.0) {
+        self.init(
+            .sRGB,
+            red: Double((hex >> 16) & 0xFF) / 255,
+            green: Double((hex >> 8) & 0xFF) / 255,
+            blue: Double(hex & 0xFF) / 255,
+            opacity: opacity
+        )
+    }
+}
+
 enum SidebarTab: String, CaseIterable {
     // Library section
     case media = "Media"
@@ -19,8 +33,8 @@ enum SidebarTab: String, CaseIterable {
     
     var icon: String {
         switch self {
-        case .media: return "folder.fill"
-        case .albums: return "photo.on.rectangle"
+        case .media: return "photo.on.rectangle"
+        case .albums: return "square.stack.3d.up.fill"
         case .months: return "calendar"
         case .trash: return "trash"
         case .dashboard: return "chart.bar.fill"
@@ -62,9 +76,8 @@ struct ContentView: View {
             HStack(spacing: 0) {
                 // Custom Sidebar
                 Sidebar(selectedTab: $selectedTab, decisionStore: decisionStore)
-                
-                // Divider between sidebar and content
-                Divider()
+                    .padding(.leading, 12)
+                    .padding(.vertical, 12)
                 
                 // Main Content
                 Group {
@@ -108,6 +121,7 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .frame(minWidth: 700, minHeight: 450)
+            .background(Color(hex: 0xFEFFFC)) // background color for the main content
             .toolbar(.hidden)
         }
         .onAppear {
@@ -173,7 +187,16 @@ struct Sidebar: View {
         }
         .padding(.top, 12)
         .frame(width: 180)
-        .background(Color(nsColor: .windowBackgroundColor).opacity(0.5))
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(hex: 0xF2F7FD))
+                    //.fill(Color(hex: 0xF8F8FF))
+                
+                RoundedRectangle(cornerRadius: 12)
+                    .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
+            }
+        )
     }
 }
 
@@ -258,7 +281,9 @@ struct TabContentView: View {
                     UtilityPlaceholderView(title: "Help", icon: "questionmark.circle", description: "Get help using Prunely")
                 }
             }
-            .padding(20)
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .padding(.bottom, 20)
         }
     }
 }
@@ -313,12 +338,24 @@ struct MonthsGridView: View {
         if albumsWithUnreviewedPhotos.isEmpty {
             EmptyStateView(title: "All Done!", message: "You've reviewed all photos in your library")
         } else {
-            LazyVGrid(columns: columns, spacing: 20) {
-                ForEach(albumsWithUnreviewedPhotos) { monthAlbum in
-                    MonthAlbumThumbnail(monthAlbum: monthAlbum, photoLibrary: photoLibrary, decisionStore: decisionStore)
-                        .onTapGesture {
-                            selectedMonthAlbum = monthAlbum
-                        }
+            VStack(spacing: 10) {
+                VStack(spacing: 4) {
+                    Text("Months")
+                        .font(.system(size: 28, weight: .semibold))
+                    
+                    Text("\(albumsWithUnreviewedPhotos.count) albums")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+
+                LazyVGrid(columns: columns, spacing: 20) {
+                    ForEach(albumsWithUnreviewedPhotos) { monthAlbum in
+                        MonthAlbumThumbnail(monthAlbum: monthAlbum, photoLibrary: photoLibrary, decisionStore: decisionStore)
+                            .onTapGesture {
+                                selectedMonthAlbum = monthAlbum
+                            }
+                    }
                 }
             }
             .navigationDestination(
@@ -361,12 +398,24 @@ struct MediaGridView: View {
         if albumsWithUnreviewedPhotos.isEmpty {
             EmptyStateView(title: "All Done!", message: "You've reviewed all media albums")
         } else {
-            LazyVGrid(columns: columns, spacing: 20) {
-                ForEach(albumsWithUnreviewedPhotos, id: \.localIdentifier) { album in
-                    AlbumThumbnail(album: album, photoLibrary: photoLibrary, decisionStore: decisionStore)
-                        .onTapGesture {
-                            selectedAlbum = album
-                        }
+            VStack(spacing: 10) {
+                VStack(spacing: 4) {
+                    Text("Media")
+                        .font(.system(size: 28, weight: .semibold))
+                    
+                    Text("\(albumsWithUnreviewedPhotos.count) albums")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+
+                LazyVGrid(columns: columns, spacing: 20) {
+                    ForEach(albumsWithUnreviewedPhotos, id: \.localIdentifier) { album in
+                        AlbumThumbnail(album: album, photoLibrary: photoLibrary, decisionStore: decisionStore)
+                            .onTapGesture {
+                                selectedAlbum = album
+                            }
+                    }
                 }
             }
             .navigationDestination(item: $selectedAlbum) { album in
@@ -403,12 +452,24 @@ struct AlbumsGridView: View {
         if albumsWithUnreviewedPhotos.isEmpty {
             EmptyStateView(title: "All Done!", message: "You've reviewed all your albums")
         } else {
-            LazyVGrid(columns: columns, spacing: 20) {
-                ForEach(albumsWithUnreviewedPhotos, id: \.localIdentifier) { album in
-                    AlbumThumbnail(album: album, photoLibrary: photoLibrary, decisionStore: decisionStore)
-                        .onTapGesture {
-                            selectedAlbum = album
-                        }
+            VStack(spacing: 10) {
+                VStack(spacing: 4) {
+                    Text("Albums")
+                        .font(.system(size: 28, weight: .semibold))
+                    
+                    Text("\(albumsWithUnreviewedPhotos.count) albums")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+
+                LazyVGrid(columns: columns, spacing: 20) {
+                    ForEach(albumsWithUnreviewedPhotos, id: \.localIdentifier) { album in
+                        AlbumThumbnail(album: album, photoLibrary: photoLibrary, decisionStore: decisionStore)
+                            .onTapGesture {
+                                selectedAlbum = album
+                            }
+                    }
                 }
             }
             .navigationDestination(item: $selectedAlbum) { album in
