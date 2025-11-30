@@ -234,4 +234,30 @@ class PhotoLibraryManager: ObservableObject {
         }
         return nil
     }
+    
+    /// Fetch photos by their local identifiers, filtering out any that no longer exist
+    /// Returns both the valid photos and the set of orphaned IDs that were removed
+    func fetchPhotos(byIDs photoIDs: Set<String>) -> (photos: [PHAsset], orphanedIDs: Set<String>) {
+        guard !photoIDs.isEmpty else {
+            return ([], [])
+        }
+        
+        let fetchOptions = PHFetchOptions()
+        fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
+        
+        let results = PHAsset.fetchAssets(withLocalIdentifiers: Array(photoIDs), options: fetchOptions)
+        
+        var validPhotos: [PHAsset] = []
+        var foundIDs: Set<String> = []
+        
+        results.enumerateObjects { asset, _, _ in
+            validPhotos.append(asset)
+            foundIDs.insert(asset.localIdentifier)
+        }
+        
+        // Find orphaned IDs (IDs that were requested but not found)
+        let orphanedIDs = photoIDs.subtracting(foundIDs)
+        
+        return (validPhotos, orphanedIDs)
+    }
 }
