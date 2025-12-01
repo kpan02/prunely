@@ -148,6 +148,19 @@ struct DashboardView: View {
             }
             .padding(.top, 16)
             
+            // Photo Count Chart
+            HStack {
+                Spacer()
+                
+                PhotoCountChartView(
+                    photoLibrary: photoLibrary
+                )
+                .frame(width: 816) // 400 + 16 + 400
+                
+                Spacer()
+            }
+            .padding(.top, 16)
+            
             Spacer()
         }
         .onAppear {
@@ -265,7 +278,7 @@ struct ProgressHeatmapView: View {
     private let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text("Progress")
                     .font(.system(size: 20, weight: .semibold))
@@ -285,7 +298,7 @@ struct ProgressHeatmapView: View {
                     .frame(maxWidth: .infinity, minHeight: 200)
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(alignment: .top, spacing: 10) {
+                    HStack(alignment: .top, spacing: 8) {
                         // Year labels column
                         VStack(alignment: .trailing, spacing: 6) {
                             // Month header row
@@ -471,6 +484,310 @@ struct HeatmapCell: View {
             return Color.yellow.opacity(0.6)
         case .done:
             return Color.green.opacity(0.7)
+        }
+    }
+}
+
+enum ChartViewMode: String, CaseIterable {
+    case year = "Year"
+    case month = "Month"
+}
+
+struct ChartDataPoint: Identifiable {
+    let id: String
+    let label: String
+    let count: Int
+    let date: Date
+}
+
+struct PhotoCountChartView: View {
+    @ObservedObject var photoLibrary: PhotoLibraryManager
+    
+    @State private var viewMode: ChartViewMode = .year
+    @State private var selectedYear: Int? = nil
+    @State private var dataPoints: [ChartDataPoint] = []
+    @State private var isLoading = true
+    @State private var maxCount: Int = 0
+    @State private var hoveredBar: String? = nil
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 25) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Total Photos")
+                        .font(.system(size: 20, weight: .semibold))
+                    
+                    if viewMode == .month, let selectedYear = selectedYear {
+                        HStack(spacing: 6) {
+                            Button {
+                                // Go back to year view
+                                self.selectedYear = nil
+                                self.viewMode = .year
+                                calculateData()
+                            } label: {
+                                Image(systemName: "chevron.left")
+                                    .font(.system(size: 11, weight: .semibold))
+                            }
+                            .buttonStyle(.plain)
+                            
+                            Text(String(format: "%d", selectedYear))
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                
+                Spacer()
+                
+                // View mode dropdown
+                Picker("View", selection: $viewMode) {
+                    ForEach(ChartViewMode.allCases, id: \.self) { mode in
+                        Text(mode.rawValue)
+                            .tag(mode)
+                    }
+                }
+                .pickerStyle(.menu)
+                .frame(width: 130)
+                .onChange(of: viewMode) { _, newMode in
+                    // Reset selected year when switching back to year view
+                    if newMode == .year {
+                        selectedYear = nil
+                    }
+                    calculateData()
+                }
+            }
+            
+            ZStack {
+                // Always render the chart structure to prevent layout shifts
+                if dataPoints.isEmpty && !isLoading {
+                    Text("No data available")
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, minHeight: chartHeight + 30)
+                } else {
+                    ScrollView(.horizontal, showsIndicators: true) {
+                        HStack(alignment: .bottom, spacing: 8) {
+                            // Y-axis labels
+                            VStack(alignment: .trailing, spacing: 0) {
+                                ForEach(yAxisLabels, id: \.self) { label in
+                                    Text(label)
+                                        .font(.system(size: 9))
+                                        .foregroundStyle(.secondary)
+                                        .frame(height: chartHeight / CGFloat(yAxisLabels.count - 1), alignment: .top)
+                                }
+                            }
+                            .frame(width: 40, height: chartHeight)
+                            
+                            // Chart bars
+                            VStack(alignment: .leading, spacing: 4) {
+                                // Chart area with bars
+                                HStack(alignment: .bottom, spacing: 4) {
+                                    ForEach(dataPoints) { point in
+                                        RoundedRectangle(cornerRadius: 3)
+                                            .fill(Color.blue.opacity(0.7))
+                                            .frame(width: barWidth, height: barHeight(for: point.count))
+                                            .overlay {
+                                                if hoveredBar == point.id {
+                                                    RoundedRectangle(cornerRadius: 3)
+                                                        .stroke(Color.blue, lineWidth: 2)
+                                                }
+                                            }
+                                            .onTapGesture {
+                                                handleBarClick(point)
+                                            }
+                                            .onHover { hovering in
+                                                hoveredBar = hovering ? point.id : nil
+                                            }
+                                            .help("\(point.label): \(point.count) photos")
+                                    }
+                                }
+                                .frame(height: chartHeight, alignment: .bottom)
+                                
+                                // X-axis labels below bars
+                                HStack(spacing: 4) {
+                                    ForEach(dataPoints) { point in
+                                        Text(point.label)
+                                            .font(.system(size: 9))
+                                            .foregroundStyle(.secondary)
+                                            .frame(width: barWidth)
+                                            .lineLimit(1)
+                                            .minimumScaleFactor(0.7)
+                                    }
+                                }
+                            }
+                        }
+                        .padding(.vertical, 8)
+                    }
+                }
+                
+                // Loading overlay
+                if isLoading {
+                    ProgressView()
+                        .frame(maxWidth: .infinity, minHeight: chartHeight + 30)
+                        .background(Color(hex: 0xF2F7FD).opacity(0.8))
+                }
+            }
+            .frame(minHeight: chartHeight + 30)
+        }
+        .padding(16)
+        .frame(maxWidth: 816)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(hex: 0xF2F7FD))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
+                )
+        )
+        .onAppear {
+            calculateData()
+        }
+    }
+    
+    private let barWidth: CGFloat = 30
+    private let chartHeight: CGFloat = 250
+    
+    
+    private var yAxisLabels: [String] {
+        guard maxCount > 0 else { return ["0"] }
+        // Round up maxCount to next nice number for better visualization
+        let roundedMax = roundUpAxis(maxCount)
+        let step = max(1, roundedMax / 5)
+        return (0...5).reversed().map { "\($0 * step)" }
+    }
+    
+    // Return the original value (as yAxisMax), but always round up to the next integer if not already an integer.
+    // Add a small margin (e.g., 5%) to keep bars from touching the top.
+    private func roundUpAxis(_ value: Int) -> Int {
+        guard value > 0 else { return 1 }
+        let margin = max(1, Int(Double(value) * 0.05))
+        return value + margin
+    }
+    
+    private var yAxisMax: Int {
+        guard maxCount > 0 else { return 1 }
+        return roundUpAxis(maxCount)
+    }
+    
+    private func barHeight(for count: Int) -> CGFloat {
+        let max = yAxisMax
+        guard max > 0 else { return 0 }
+        return CGFloat(count) / CGFloat(max) * chartHeight
+    }
+    
+    private func handleBarClick(_ point: ChartDataPoint) {
+        switch viewMode {
+        case .year:
+            // Click year -> zoom to months
+            if let year = Int(point.label) {
+                selectedYear = year
+                viewMode = .month
+                calculateData()
+            }
+        case .month:
+            // Month bars are not clickable for further navigation
+            break
+        }
+    }
+    
+    private func calculateData() {
+        isLoading = true
+        
+        // Capture values before entering background task
+        let currentViewMode = viewMode
+        let currentSelectedYear = selectedYear
+        
+        Task.detached(priority: .userInitiated) {
+            let calendar = Calendar.current
+            var points: [ChartDataPoint] = []
+            var max: Int = 0
+            
+            // Fetch all photos
+            let fetchOptions = PHFetchOptions()
+            fetchOptions.predicate = NSPredicate(format: "mediaType == %d", PHAssetMediaType.image.rawValue)
+            let results = PHAsset.fetchAssets(with: fetchOptions)
+            
+            switch currentViewMode {
+            case .year:
+                // Group by year
+                var yearCounts: [Int: Int] = [:]
+                results.enumerateObjects { asset, _, _ in
+                    guard let creationDate = asset.creationDate else { return }
+                    let year = calendar.component(.year, from: creationDate)
+                    yearCounts[year, default: 0] += 1
+                }
+                
+                let sortedYears = yearCounts.keys.sorted(by: >)
+                for year in sortedYears {
+                    let count = yearCounts[year] ?? 0
+                    max = Swift.max(max, count)
+                    if let date = calendar.date(from: DateComponents(year: year, month: 1, day: 1)) {
+                        points.append(ChartDataPoint(
+                            id: "year-\(year)",
+                            label: "\(year)",
+                            count: count,
+                            date: date
+                        ))
+                    }
+                }
+                
+            case .month:
+                // Group by month (chronological)
+                var monthCounts: [String: (count: Int, date: Date)] = [:]
+                
+                results.enumerateObjects { asset, _, _ in
+                    guard let creationDate = asset.creationDate else { return }
+                    let components = calendar.dateComponents([.year, .month], from: creationDate)
+                    guard let year = components.year, let month = components.month else { return }
+                    
+                    // Filter by selected year if zoomed
+                    if let currentSelectedYear = currentSelectedYear, year != currentSelectedYear {
+                        return
+                    }
+                    
+                    let key = "\(year)-\(String(format: "%02d", month))"
+                    if monthCounts[key] == nil {
+                        monthCounts[key] = (count: 0, date: calendar.date(from: components) ?? creationDate)
+                    }
+                    monthCounts[key]?.count += 1
+                }
+                
+                // Sort: reverse chronological if general view, chronological if year-specific
+                let sortedMonths = currentSelectedYear != nil 
+                    ? monthCounts.sorted { $0.value.date < $1.value.date }
+                    : monthCounts.sorted { $0.value.date > $1.value.date }
+                
+                let monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+                
+                for (key, value) in sortedMonths {
+                    let components = calendar.dateComponents([.year, .month], from: value.date)
+                    if let year = components.year, let month = components.month {
+                        let label: String
+                        if currentSelectedYear != nil {
+                            // Year-specific view: use month name
+                            label = monthNames[month - 1]
+                        } else {
+                            // General view: use M/YY format (e.g., "1/13" or "11/24")
+                            label = "\(month)/\(String(format: "%02d", year % 100))"
+                        }
+                        max = Swift.max(max, value.count)
+                        points.append(ChartDataPoint(
+                            id: "month-\(key)",
+                            label: label,
+                            count: value.count,
+                            date: value.date
+                        ))
+                    }
+                }
+            }
+            
+            let finalPoints = points
+            let finalMax = max
+            
+            await MainActor.run {
+                self.dataPoints = finalPoints
+                self.maxCount = finalMax
+                self.isLoading = false
+            }
         }
     }
 }
