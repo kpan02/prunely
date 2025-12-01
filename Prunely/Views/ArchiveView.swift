@@ -319,7 +319,7 @@ struct EmptyArchiveView: View {
                 .font(.title2)
                 .fontWeight(.semibold)
             
-            Text("Photos you mark as kept will appear here")
+            Text("Photos you keep will appear here")
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

@@ -333,7 +333,7 @@ struct EmptyTrashView: View {
                 .font(.title2)
                 .fontWeight(.semibold)
             
-            Text("Photos you mark for deletion will appear here")
+            Text("Photos you delete will appear here")
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
