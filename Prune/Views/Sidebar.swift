@@ -1,6 +1,6 @@
 //
 //  Sidebar.swift
-//  Prunely
+//  Prune
 //
 
 import SwiftUI

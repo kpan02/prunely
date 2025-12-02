@@ -1,6 +1,6 @@
 //
 //  ContentView.swift
-//  Prunely
+//  Prune
 //
 
 import SwiftUI
@@ -44,7 +44,7 @@ struct ContentView: View {
                             Image(systemName: "photo.on.rectangle")
                                 .font(.system(size: 60))
                                 .foregroundStyle(.blue)
-                            Text("Prunely needs access to your Photos")
+                            Text("Prune needs access to your Photos")
                                 .font(.title2)
                             Button("Grant Access") {
                                 photoLibrary.requestAccess()
@@ -101,7 +101,7 @@ struct TabContentView: View {
                 case .archive:
                     ArchiveGridView(photoLibrary: photoLibrary, decisionStore: decisionStore, columns: columns)
                 case .help:
-                    UtilityPlaceholderView(title: "Help", icon: "questionmark.circle", description: "Get help using Prunely")
+                    UtilityPlaceholderView(title: "Help", icon: "questionmark.circle", description: "Get help using Prune")
                 }
             }
             .padding(.horizontal, 20)

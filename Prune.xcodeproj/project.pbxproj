@@ -7,13 +7,13 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		7C1DF7942ED9644A00527A60 /* Prunely.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Prunely.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7C1DF7942ED9644A00527A60 /* Prune.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Prune.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		7C1DF7962ED9644A00527A60 /* Prunely */ = {
+		7C1DF7962ED9644A00527A60 /* Prune */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Prunely;
+			path = Prune;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -32,7 +32,7 @@
 		7C1DF78B2ED9644A00527A60 = {
 			isa = PBXGroup;
 			children = (
-				7C1DF7962ED9644A00527A60 /* Prunely */,
+				7C1DF7962ED9644A00527A60 /* Prune */,
 				7C1DF7952ED9644A00527A60 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -40,7 +40,7 @@
 		7C1DF7952ED9644A00527A60 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				7C1DF7942ED9644A00527A60 /* Prunely.app */,
+				7C1DF7942ED9644A00527A60 /* Prune.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,9 +48,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		7C1DF7932ED9644A00527A60 /* Prunely */ = {
+		7C1DF7932ED9644A00527A60 /* Prune */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 7C1DF79F2ED9644B00527A60 /* Build configuration list for PBXNativeTarget "Prunely" */;
+			buildConfigurationList = 7C1DF79F2ED9644B00527A60 /* Build configuration list for PBXNativeTarget "Prune" */;
 			buildPhases = (
 				7C1DF7902ED9644A00527A60 /* Sources */,
 				7C1DF7912ED9644A00527A60 /* Frameworks */,
@@ -61,13 +61,13 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				7C1DF7962ED9644A00527A60 /* Prunely */,
+				7C1DF7962ED9644A00527A60 /* Prune */,
 			);
-			name = Prunely;
+			name = Prune;
 			packageProductDependencies = (
 			);
-			productName = Prunely;
-			productReference = 7C1DF7942ED9644A00527A60 /* Prunely.app */;
+			productName = Prune;
+			productReference = 7C1DF7942ED9644A00527A60 /* Prune.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -85,7 +85,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 7C1DF78F2ED9644A00527A60 /* Build configuration list for PBXProject "Prunely" */;
+			buildConfigurationList = 7C1DF78F2ED9644A00527A60 /* Build configuration list for PBXProject "Prune" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -99,7 +99,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				7C1DF7932ED9644A00527A60 /* Prunely */,
+				7C1DF7932ED9644A00527A60 /* Prune */,
 			);
 		};
 /* End PBXProject section */
@@ -271,14 +271,15 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Prune;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Prunely needs access to your photos to help you clean your library.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Prune needs access to your photos to help you clean your library.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.kevinpan.Prunely;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kevinpan.Prune;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
@@ -322,14 +323,15 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Prune;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Prunely needs access to your photos to help you clean your library.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Prune needs access to your photos to help you clean your library.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.kevinpan.Prunely;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kevinpan.Prune;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
@@ -350,7 +352,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		7C1DF78F2ED9644A00527A60 /* Build configuration list for PBXProject "Prunely" */ = {
+		7C1DF78F2ED9644A00527A60 /* Build configuration list for PBXProject "Prune" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				7C1DF79D2ED9644B00527A60 /* Debug */,
@@ -359,7 +361,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		7C1DF79F2ED9644B00527A60 /* Build configuration list for PBXNativeTarget "Prunely" */ = {
+		7C1DF79F2ED9644B00527A60 /* Build configuration list for PBXNativeTarget "Prune" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				7C1DF7A02ED9644B00527A60 /* Debug */,

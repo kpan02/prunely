@@ -1,6 +1,6 @@
 //
 //  SharedViews.swift
-//  Prunely
+//  Prune
 //
 
 import SwiftUI

@@ -1,6 +1,6 @@
 //
 //  LibraryViews.swift
-//  Prunely
+//  Prune
 //
 
 import SwiftUI

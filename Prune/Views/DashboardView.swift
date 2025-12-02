@@ -1,6 +1,6 @@
 //
 //  DashboardView.swift
-//  Prunely
+//  Prune
 //
 
 import SwiftUI

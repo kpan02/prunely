@@ -1,6 +1,6 @@
 //
 //  Color+Hex.swift
-//  Prunely
+//  Prune
 //
 
 import SwiftUI

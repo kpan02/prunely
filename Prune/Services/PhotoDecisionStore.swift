@@ -1,6 +1,6 @@
 //
 //  PhotoDecisionStore.swift
-//  Prunely
+//  Prune
 //
 //  Manages persistence of user decisions (archive/trash) for photo review.
 //
@@ -40,13 +40,13 @@ class PhotoDecisionStore: ObservableObject {
     private let fileURL: URL
     
     init() {
-        // Set up file path: ~/Library/Application Support/Prunely/decisions.json
+        // Set up file path: ~/Library/Application Support/Prune/decisions.json
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let prunelyFolder = appSupport.appendingPathComponent("Prunely")
-        self.fileURL = prunelyFolder.appendingPathComponent("decisions.json")
+        let pruneFolder = appSupport.appendingPathComponent("Prune")
+        self.fileURL = pruneFolder.appendingPathComponent("decisions.json")
         
         // Create directory if needed
-        try? FileManager.default.createDirectory(at: prunelyFolder, withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(at: pruneFolder, withIntermediateDirectories: true)
         
         // Load existing decisions
         load()

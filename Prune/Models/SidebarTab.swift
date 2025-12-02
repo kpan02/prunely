@@ -1,6 +1,6 @@
 //
 //  SidebarTab.swift
-//  Prunely
+//  Prune
 //
 
 import Foundation

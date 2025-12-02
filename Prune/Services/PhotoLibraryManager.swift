@@ -1,6 +1,6 @@
 //
 //  PhotoLibraryManager.swift
-//  Prunely
+//  Prune
 //
 
 import Photos

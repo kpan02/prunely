@@ -1,6 +1,6 @@
 //
-//  PrunelyApp.swift
-//  Prunely
+//  PruneApp.swift
+//  Prune
 //
 //  Created by Kevin Pan on 11/28/25.
 //
@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct PrunelyApp: App {
+struct PruneApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()

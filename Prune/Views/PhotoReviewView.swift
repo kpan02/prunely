@@ -1,6 +1,6 @@
 //
 //  PhotoReviewView.swift
-//  Prunely
+//  Prune
 //
 //  Photo review interface with filmstrip navigation and flexible reviewing.
 //

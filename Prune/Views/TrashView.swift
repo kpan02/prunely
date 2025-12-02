@@ -1,28 +1,25 @@
 //
-//  ArchiveView.swift
-//  Prunely
+//  TrashView.swift
+//  Prune
 //
 
 import SwiftUI
 import Photos
 
-struct ArchiveGridView: View {
+struct TrashGridView: View {
     @ObservedObject var photoLibrary: PhotoLibraryManager
     @ObservedObject var decisionStore: PhotoDecisionStore
     let columns: [GridItem]
     
-    @State private var archivedPhotos: [PHAsset] = []
-    @State private var isCalculatingStorage = false
+    @State private var trashedPhotos: [PHAsset] = []
+    @State private var totalStorage: Int64 = 0
     @State private var isLoading = true
+    @State private var showEmptyTrashConfirmation = false
     @State private var showRestoreAllConfirmation = false
     @State private var selectedPhoto: PHAsset?
     
     private var photoCount: Int {
-        archivedPhotos.count
-    }
-    
-    private var totalStorage: Int64 {
-        decisionStore.totalArchivedStorage
+        trashedPhotos.count
     }
     
     private var formattedStorage: String {
@@ -34,18 +31,13 @@ struct ArchiveGridView: View {
             // Header
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Archive")
+                    Text("Trash")
                         .font(.system(size: 28, weight: .semibold))
                     
                     if !isLoading {
                         HStack(spacing: 8) {
                             Text("\(photoCount) \(photoCount == 1 ? "photo" : "photos")")
-                            if isCalculatingStorage {
-                                Text("•")
-                                    .foregroundStyle(.secondary.opacity(0.5))
-                                Text("Calculating...")
-                                    .foregroundStyle(.secondary.opacity(0.7))
-                            } else if totalStorage > 0 {
+                            if totalStorage > 0 {
                                 Text("•")
                                     .foregroundStyle(.secondary.opacity(0.5))
                                 Text(formattedStorage)
@@ -58,14 +50,24 @@ struct ArchiveGridView: View {
                 
                 Spacer()
                 
-                // Action button
-                if !archivedPhotos.isEmpty {
-                    Button {
-                        showRestoreAllConfirmation = true
-                    } label: {
-                        Label("Restore All", systemImage: "arrow.uturn.backward")
+                // Action buttons
+                if !trashedPhotos.isEmpty {
+                    HStack(spacing: 12) {
+                        Button {
+                            showRestoreAllConfirmation = true
+                        } label: {
+                            Label("Restore All", systemImage: "arrow.uturn.backward")
+                        }
+                        .buttonStyle(.bordered)
+                        
+                        Button {
+                            showEmptyTrashConfirmation = true
+                        } label: {
+                            Label("Empty Trash", systemImage: "trash.fill")
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.red)
                     }
-                    .buttonStyle(.bordered)
                 }
             }
             .padding(.bottom, 8)
@@ -74,12 +76,12 @@ struct ArchiveGridView: View {
             if isLoading {
                 ProgressView()
                     .frame(maxWidth: .infinity, minHeight: 300)
-            } else if archivedPhotos.isEmpty {
-                EmptyArchiveView()
+            } else if trashedPhotos.isEmpty {
+                EmptyTrashView()
             } else {
                 LazyVGrid(columns: columns, spacing: 20) {
-                    ForEach(archivedPhotos, id: \.localIdentifier) { asset in
-                        ArchivePhotoThumbnail(
+                    ForEach(trashedPhotos, id: \.localIdentifier) { asset in
+                        TrashPhotoThumbnail(
                             asset: asset,
                             photoLibrary: photoLibrary,
                             decisionStore: decisionStore,
@@ -95,12 +97,20 @@ struct ArchiveGridView: View {
             }
         }
         .onAppear {
-            loadArchivedPhotos()
+            loadTrashedPhotos()
         }
-        .onChange(of: decisionStore.archivedPhotoIDs.count) { _, _ in
-            loadArchivedPhotos()
+        .onChange(of: decisionStore.trashedPhotoIDs.count) { _, _ in
+            loadTrashedPhotos()
         }
-        .alert("Are you sure you want to restore all \(photoCount) photos from archive?", isPresented: $showRestoreAllConfirmation) {
+        .alert("Empty Trash", isPresented: $showEmptyTrashConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete All", role: .destructive) {
+                emptyTrash()
+            }
+        } message: {
+            Text("Are you sure you want to permanently delete all \(photoCount) photos in trash? This action cannot be undone.")
+        }
+        .alert("Are you sure you want to restore all \(photoCount) photos from trash?", isPresented: $showRestoreAllConfirmation) {
             Button("Cancel", role: .cancel) { }
             Button("Restore All", role: .destructive) {
                 restoreAll()
@@ -116,7 +126,7 @@ struct ArchiveGridView: View {
         ) {
             if let asset = selectedPhoto {
                 PhotoReviewView(
-                    albumTitle: "Archive",
+                    albumTitle: "Trash",
                     photos: [asset],
                     photoLibrary: photoLibrary,
                     decisionStore: decisionStore
@@ -125,22 +135,32 @@ struct ArchiveGridView: View {
         }
     }
     
-    private func loadArchivedPhotos() {
+    private func loadTrashedPhotos() {
         isLoading = true
         
         // Validate and cleanup orphaned IDs before loading
         decisionStore.validateAndCleanup()
         
-        let archivedIDs = decisionStore.archivedPhotoIDs
+        let trashedIDs = decisionStore.trashedPhotoIDs
         
-        guard !archivedIDs.isEmpty else {
-            archivedPhotos = []
+        guard !trashedIDs.isEmpty else {
+            trashedPhotos = []
+            totalStorage = 0
             isLoading = false
             return
         }
         
-        let result = photoLibrary.fetchPhotos(byIDs: archivedIDs)
-        archivedPhotos = result.photos
+        let result = photoLibrary.fetchPhotos(byIDs: trashedIDs)
+        trashedPhotos = result.photos
+        
+        // Calculate total storage
+        var storage: Int64 = 0
+        for asset in trashedPhotos {
+            if let fileSize = photoLibrary.getFileSize(for: asset) {
+                storage += fileSize
+            }
+        }
+        totalStorage = storage
         
         // Clean up orphaned IDs from decision store
         if !result.orphanedIDs.isEmpty {
@@ -151,54 +171,20 @@ struct ArchiveGridView: View {
         }
         
         isLoading = false
-        
-        // Calculate storage async if cache is missing or invalid
-        if decisionStore.totalArchivedStorage == 0 && !archivedPhotos.isEmpty {
-            calculateStorageAsync()
-        }
-    }
-    
-    private func calculateStorageAsync() {
-        guard !archivedPhotos.isEmpty else { return }
-        
-        isCalculatingStorage = true
-        
-        // Calculate storage on background thread
-        Task.detached(priority: .userInitiated) { [archivedPhotos] in
-            var storage: Int64 = 0
-            
-            // Calculate storage for all photos
-            for asset in archivedPhotos {
-                let resources = PHAssetResource.assetResources(for: asset)
-                if let resource = resources.first,
-                let unsignedInt64 = resource.value(forKey: "fileSize") as? CLong {
-                    storage += Int64(unsignedInt64)
-                }
-            }
-            
-            // Capture the final value before MainActor.run
-            let finalStorage = storage
-            
-            // Update on main thread
-            await MainActor.run {
-                decisionStore.updateArchivedStorage(finalStorage)
-                isCalculatingStorage = false
-            }
-        }
     }
     
     private func restorePhoto(_ asset: PHAsset) {
         decisionStore.restore(asset.localIdentifier)
         // Reload to update the view immediately
-        loadArchivedPhotos()
+        loadTrashedPhotos()
     }
     
     private func restoreAll() {
-        for asset in archivedPhotos {
+        for asset in trashedPhotos {
             decisionStore.restore(asset.localIdentifier)
         }
         // Reload to update the view immediately
-        loadArchivedPhotos()
+        loadTrashedPhotos()
     }
     
     private func formatFileSize(_ bytes: Int64) -> String {
@@ -207,9 +193,37 @@ struct ArchiveGridView: View {
         formatter.countStyle = .file
         return formatter.string(fromByteCount: bytes)
     }
+    
+    private func emptyTrash() {
+        // Calculate statistics BEFORE deletion (while assets still exist)
+        let photosDeleted = trashedPhotos.count
+        var storageFreed: Int64 = 0
+        
+        // Sum up file sizes for all photos being deleted
+        for asset in trashedPhotos {
+            if let fileSize = photoLibrary.getFileSize(for: asset) {
+                storageFreed += fileSize
+            }
+        }
+        
+        // Permanently delete all trashed photos
+        let assetsToDelete = trashedPhotos
+        PHPhotoLibrary.shared().performChanges({
+            PHAssetChangeRequest.deleteAssets(assetsToDelete as NSArray)
+        }, completionHandler: { success, error in
+            if success {
+                // Update statistics in decision store after successful deletion
+                Task { @MainActor in
+                    decisionStore.emptyTrash(photosDeleted: photosDeleted, storageFreed: storageFreed)
+                }
+            } else if let error = error {
+                print("Error deleting photos: \(error.localizedDescription)")
+            }
+        })
+    }
 }
 
-struct ArchivePhotoThumbnail: View {
+struct TrashPhotoThumbnail: View {
     let asset: PHAsset
     @ObservedObject var photoLibrary: PhotoLibraryManager
     @ObservedObject var decisionStore: PhotoDecisionStore
@@ -241,22 +255,22 @@ struct ArchivePhotoThumbnail: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .strokeBorder(Color.green.opacity(0.4), lineWidth: 2)
+                        .strokeBorder(Color.red.opacity(0.4), lineWidth: 2)
                 )
                 .overlay(
-                    // Green overlay to indicate archive/kept
+                    // Red overlay to indicate trash
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.green.opacity(isHovered ? 0.1 : 0.05))
+                        .fill(Color.red.opacity(isHovered ? 0.1 : 0.05))
                 )
                 
-                // Archive badge (checkmark)
-                Image(systemName: "checkmark.circle.fill")
+                // Trash badge
+                Image(systemName: "trash.fill")
                     .font(.system(size: 12))
                     .foregroundStyle(.white)
                     .padding(6)
                     .background(
                         Circle()
-                            .fill(Color.green)
+                            .fill(Color.red)
                     )
                     .padding(8)
                 
@@ -308,18 +322,18 @@ struct ArchivePhotoThumbnail: View {
     }
 }
 
-struct EmptyArchiveView: View {
+struct EmptyTrashView: View {
     var body: some View {
         VStack(spacing: 16) {
-            Image(systemName: "archivebox")
+            Image(systemName: "trash")
                 .font(.system(size: 56))
                 .foregroundStyle(.secondary.opacity(0.6))
             
-            Text("Archive is empty")
+            Text("Trash is empty")
                 .font(.title2)
                 .fontWeight(.semibold)
             
-            Text("Photos you keep will appear here")
+            Text("Photos you delete will appear here")
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
