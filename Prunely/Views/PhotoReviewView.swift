@@ -280,8 +280,8 @@ struct PhotoReviewView: View {
                             .scaledToFit()
                             .frame(maxWidth: proxy.size.width, maxHeight: proxy.size.height)
                         
-                        // Overlay favorite indicator on the photo itself
-                        if let asset = currentAsset, asset.isFavorite {
+                        // Overlay indicators on the photo itself
+                        if let asset = currentAsset {
                             GeometryReader { imageProxy in
                                 let imageSize = image.size
                                 let containerSize = imageProxy.size
@@ -291,19 +291,40 @@ struct PhotoReviewView: View {
                                 let xOffset = (containerSize.width - scaledWidth) / 2
                                 let yOffset = (containerSize.height - scaledHeight) / 2
                                 
-                                Image(systemName: "star.fill")
-                                    .font(.system(size: 25, weight: .semibold))
-                                    .foregroundStyle(.yellow)
-                                    .padding(5)
-                                    .background(
-                                        Circle()
-                                            .fill(Color.white.opacity(1))
-                                            .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
-                                    )
-                                    .position(
-                                        x: xOffset + scaledWidth - 25,
-                                        y: yOffset + 25
-                                    )
+                                // Favorite indicator (top-right)
+                                if asset.isFavorite {
+                                    Image(systemName: "star.fill")
+                                        .font(.system(size: 25, weight: .semibold))
+                                        .foregroundStyle(.yellow)
+                                        .padding(5)
+                                        .background(
+                                            Circle()
+                                                .fill(Color.white.opacity(1))
+                                                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                                        )
+                                        .position(
+                                            x: xOffset + scaledWidth - 25,
+                                            y: yOffset + 25
+                                        )
+                                }
+                                
+                                // Reviewed indicator (top-left)
+                                if decisionStore.isReviewed(asset.localIdentifier) {
+                                    let isKept = decisionStore.isArchived(asset.localIdentifier)
+                                    Image(systemName: isKept ? "checkmark.circle.fill" : "trash.fill")
+                                        .font(.system(size: 25, weight: .semibold))
+                                        .foregroundStyle(isKept ? .green : .red)
+                                        .padding(5)
+                                        .background(
+                                            Circle()
+                                                .fill(Color.white.opacity(1))
+                                                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                                        )
+                                        .position(
+                                            x: xOffset + 25,
+                                            y: yOffset + 25
+                                        )
+                                }
                             }
                         }
                     }
