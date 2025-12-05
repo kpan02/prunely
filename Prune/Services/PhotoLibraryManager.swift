@@ -275,6 +275,20 @@ class PhotoLibraryManager: NSObject, ObservableObject, PHPhotoLibraryChangeObser
         return (validPhotos, orphanedIDs)
     }
     
+    func toggleFavorite(for asset: PHAsset, completion: @escaping (Bool) -> Void) {
+        PHPhotoLibrary.shared().performChanges({
+            let request = PHAssetChangeRequest(for: asset)
+            request.isFavorite = !asset.isFavorite
+        }, completionHandler: { success, error in
+            if let error = error {
+                print("Failed to toggle favorite: \(error.localizedDescription)")
+            }
+            DispatchQueue.main.async {
+                completion(success)
+            }
+        })
+    }
+    
     // MARK: - PHPhotoLibraryChangeObserver
     
     func photoLibraryDidChange(_ changeInstance: PHChange) {

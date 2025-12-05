@@ -29,6 +29,7 @@ struct PhotoReviewView: View {
     @State private var feedback: ReviewFeedback?
     @State private var hideReviewed = false  // Default: show all photos
     @State private var thumbnailCache: [String: NSImage] = [:]
+    @State private var refreshTrigger = UUID()  
     
     init(albumTitle: String, photos: [PHAsset], photoLibrary: PhotoLibraryManager, decisionStore: PhotoDecisionStore) {
         self.albumTitle = albumTitle
@@ -76,6 +77,12 @@ struct PhotoReviewView: View {
             return .deleted
         }
         return nil
+    }
+    
+    // Current photo's favorite status
+    private var isCurrentPhotoFavorited: Bool {
+        _ = refreshTrigger  // Use refresh trigger to force recomputation
+        return currentAsset?.isFavorite ?? false
     }
     
     var body: some View {
@@ -446,21 +453,51 @@ struct PhotoReviewView: View {
                     .padding(.top, 2)
             }
             
-            // Undo button - bottom left (only visible when photo is reviewed)
-            HStack {
+            // Favorite and Clear Decision buttons - bottom left
+            HStack(spacing: 8) {
+                // Favorite button - always visible
+                Button {
+                    handleToggleFavorite()
+                } label: {
+                    HStack(spacing: 8) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(isCurrentPhotoFavorited ? "Unfavorite" : "Favorite")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(.black)
+                            Text(isCurrentPhotoFavorited ? "       [ f ]" : "     [ f ]")
+                                .font(.system(size: 11, weight: .regular))
+                                .foregroundStyle(.black)
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color(hex: 0xFFC30B))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .strokeBorder(Color.gray.opacity(0.3), lineWidth: 1)
+                            )
+                            .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut("f", modifiers: [])
+                
+                // Clear Decision button - only visible when photo is reviewed
                 if currentDecisionStatus != nil {
                     Button {
                         handleClearDecision()
                     } label: {
-                        HStack(spacing: 8) {                            
+                        HStack(spacing: 8) {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Clear Decision")
                                     .font(.system(size: 13, weight: .medium))
                                     .foregroundStyle(.white)
-                                Text("       [space]")
+                                Text("        [space]")
                                     .font(.system(size: 11, weight: .regular))
-                                    .foregroundStyle(.white.opacity(0.9))
-                            }
+                                    .foregroundStyle(.white)
+                                                               }
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 10)
@@ -548,6 +585,20 @@ struct PhotoReviewView: View {
         guard decisionStore.isReviewed(asset.localIdentifier) else { return }
         decisionStore.restore(asset.localIdentifier)
         showFeedback(.cleared)
+    }
+    
+    private func handleToggleFavorite() {
+        guard let asset = currentAsset, let photoId = currentPhotoId else { return }
+        photoLibrary.toggleFavorite(for: asset) { success in
+            if success {
+                DispatchQueue.main.async {
+                    let fetchOptions = PHFetchOptions()
+                    if PHAsset.fetchAssets(withLocalIdentifiers: [photoId], options: fetchOptions).firstObject != nil {
+                        self.refreshTrigger = UUID()
+                    }
+                }
+            }
+        }
     }
     
     private func goToNext() {
