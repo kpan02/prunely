@@ -58,15 +58,7 @@ struct Sidebar: View {
         }
         .padding(.top, 12)
         .frame(width: 180)
-        .background(
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(hex: 0xF2F7FD))
-                
-                RoundedRectangle(cornerRadius: 12)
-                    .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
-            }
-        )
+        .cardBackground()
     }
 }
 

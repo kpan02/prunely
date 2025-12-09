@@ -87,14 +87,7 @@ struct ProgressHeatmapView: View {
         }
         .padding(16)
         .frame(maxWidth: 816)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(hex: 0xF2F7FD))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
-                )
-        )
+        .cardBackground()
         .onAppear {
             calculateProgress()
         }
@@ -382,14 +375,7 @@ struct PhotoCountChartView: View {
         }
         .padding(16)
         .frame(maxWidth: 816)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(hex: 0xF2F7FD))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
-                )
-        )
+        .cardBackground()
         .onAppear {
             calculateData()
         }
@@ -608,14 +594,7 @@ struct TopUnreviewedMonthsView: View {
         }
         .padding(16)
         .frame(maxWidth: 816)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(hex: 0xF2F7FD))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
-                )
-        )
+        .cardBackground()
         .onAppear {
             calculateTopMonths()
         }

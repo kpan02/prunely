@@ -827,19 +827,12 @@ struct PhotoReviewView: View {
         let dateString = asset.creationDate.map { dateFormatter.string(from: $0) } ?? "Unknown"
         
         let fileSize = photoLibrary.getFileSize(for: asset)
-        let sizeString = fileSize.map { formatFileSize($0) }
+        let sizeString = fileSize.map { ByteCountFormatter.formatFileSize($0) }
         
         metadata = PhotoMetadata(
             formattedDate: dateString,
             formattedSize: sizeString
         )
-    }
-    
-    private func formatFileSize(_ bytes: Int64) -> String {
-        let formatter = ByteCountFormatter()
-        formatter.allowedUnits = [.useMB, .useGB]
-        formatter.countStyle = .file
-        return formatter.string(fromByteCount: bytes)
     }
     
     private func getDecisionStatus(for asset: PHAsset) -> DecisionStatus? {

@@ -82,14 +82,7 @@ struct DashboardView: View {
                 }
                 .padding(16)
                 .frame(maxWidth: 400, maxHeight: .infinity, alignment: .topLeading)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(hex: 0xF2F7FD))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
-                        )
-                )
+                .cardBackground()
                 
                 // Deletion Statistics Card
                 VStack(alignment: .leading, spacing: 20) {
@@ -106,7 +99,7 @@ struct DashboardView: View {
                         
                         DeletionStatRow(
                             label: "Storage Saved",
-                            value: formatFileSize(decisionStore.totalStorageFreed),
+                            value: ByteCountFormatter.formatFileSize(decisionStore.totalStorageFreed),
                             icon: "externaldrive.fill",
                             color: .blue
                         )
@@ -121,14 +114,7 @@ struct DashboardView: View {
                 }
                 .padding(16)
                 .frame(maxWidth: 400, maxHeight: .infinity, alignment: .topLeading)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(hex: 0xF2F7FD))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
-                        )
-                )
+                .cardBackground()
                 }
                 
                 Spacer()
@@ -203,13 +189,6 @@ struct DashboardView: View {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         return formatter.string(from: NSNumber(value: number)) ?? "\(number)"
-    }
-    
-    private func formatFileSize(_ bytes: Int64) -> String {
-        let formatter = ByteCountFormatter()
-        formatter.allowedUnits = [.useMB, .useGB]
-        formatter.countStyle = .file
-        return formatter.string(fromByteCount: bytes)
     }
 }
 

@@ -25,10 +25,6 @@ struct TrashGridView: View {
         trashedPhotos.count
     }
     
-    private var formattedStorage: String {
-        formatFileSize(totalStorage)
-    }
-    
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Header
@@ -43,7 +39,7 @@ struct TrashGridView: View {
                             if totalStorage > 0 {
                                 Text("•")
                                     .foregroundStyle(.secondary.opacity(0.5))
-                                Text(formattedStorage)
+                                Text(ByteCountFormatter.formatFileSize(totalStorage))
                             }
                         }
                         .font(.caption)
@@ -195,13 +191,6 @@ struct TrashGridView: View {
         }
         // Reload to update the view immediately
         loadTrashedPhotos()
-    }
-    
-    private func formatFileSize(_ bytes: Int64) -> String {
-        let formatter = ByteCountFormatter()
-        formatter.allowedUnits = [.useMB, .useGB]
-        formatter.countStyle = .file
-        return formatter.string(fromByteCount: bytes)
     }
     
     private func emptyTrash() {

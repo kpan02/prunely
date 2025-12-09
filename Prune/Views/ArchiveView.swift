@@ -25,10 +25,6 @@ struct ArchiveGridView: View {
         decisionStore.totalArchivedStorage
     }
     
-    private var formattedStorage: String {
-        formatFileSize(totalStorage)
-    }
-    
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Header
@@ -45,10 +41,10 @@ struct ArchiveGridView: View {
                                     .foregroundStyle(.secondary.opacity(0.5))
                                 Text("Calculating...")
                                     .foregroundStyle(.secondary.opacity(0.7))
-                            } else if totalStorage > 0 {
+                            } else                             if totalStorage > 0 {
                                 Text("•")
                                     .foregroundStyle(.secondary.opacity(0.5))
-                                Text(formattedStorage)
+                                Text(ByteCountFormatter.formatFileSize(totalStorage))
                             }
                         }
                         .font(.caption)
@@ -217,12 +213,6 @@ struct ArchiveGridView: View {
         loadArchivedPhotos()
     }
     
-    private func formatFileSize(_ bytes: Int64) -> String {
-        let formatter = ByteCountFormatter()
-        formatter.allowedUnits = [.useMB, .useGB]
-        formatter.countStyle = .file
-        return formatter.string(fromByteCount: bytes)
-    }
 }
 
 struct ArchivePhotoThumbnail: View {
