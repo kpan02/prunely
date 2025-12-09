@@ -183,10 +183,6 @@ class PhotoLibraryManager: NSObject, ObservableObject, PHPhotoLibraryChangeObser
         return assets
     }
     
-    func getPhotoCount(for album: PHAssetCollection) -> Int {
-        return PHAsset.fetchAssets(in: album, options: nil).count
-    }
-    
     func loadThumbnail(for asset: PHAsset, size: CGSize, completion: @escaping (NSImage?) -> Void) {
         let options = PHImageRequestOptions()
         options.isSynchronous = false

@@ -99,19 +99,6 @@ struct ProgressHeatmapView: View {
         }
     }
     
-    private func colorForStatus(_ status: MonthProgressStatus) -> Color {
-        switch status {
-        case .empty:
-            return Color.white.opacity(0.3)
-        case .unreviewed:
-            return Color.gray.opacity(0.3)
-        case .inProgress:
-            return Color.yellow.opacity(0.6)
-        case .done:
-            return Color.green.opacity(0.7)
-        }
-    }
-    
     private func calculateProgress() {
         isLoading = true
         
