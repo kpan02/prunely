@@ -147,7 +147,6 @@ struct ArchiveGridView: View {
 
         // Clean up orphaned IDs from decision store
         if !result.orphanedIDs.isEmpty {
-            // Remove orphaned IDs from the decision store
             for orphanedID in result.orphanedIDs {
                 decisionStore.restore(orphanedID) // This removes it from both archived and trashed
             }
@@ -188,7 +187,6 @@ struct ArchiveGridView: View {
                 }
             }
 
-            // Capture the final value before MainActor.run
             let finalStorage = storage
 
             // Update on main thread
@@ -201,7 +199,6 @@ struct ArchiveGridView: View {
 
     private func restorePhoto(_ asset: PHAsset) {
         decisionStore.restore(asset.localIdentifier)
-        // Reload to update the view immediately
         loadArchivedPhotos()
     }
 
@@ -209,7 +206,6 @@ struct ArchiveGridView: View {
         for asset in archivedPhotos {
             decisionStore.restore(asset.localIdentifier)
         }
-        // Reload to update the view immediately
         loadArchivedPhotos()
     }
 }

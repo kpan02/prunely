@@ -49,10 +49,8 @@ class PhotoDecisionStore: ObservableObject {
         let pruneFolder = appSupport.appendingPathComponent("Prune")
         fileURL = pruneFolder.appendingPathComponent("decisions.json")
 
-        // Create directory if needed
         try? FileManager.default.createDirectory(at: pruneFolder, withIntermediateDirectories: true)
-
-        // Load existing decisions
+        
         load()
     }
 
@@ -62,8 +60,6 @@ class PhotoDecisionStore: ObservableObject {
     func archive(_ photoID: String) {
         archivedPhotoIDs.insert(photoID)
         trashedPhotoIDs.remove(photoID) // Remove from trash if it was there
-        // Invalidate cached storage - will be recalculated lazily when Archive view loads
-        // This avoids expensive recalculation on every archive operation
         totalArchivedStorage = 0
         save()
     }
@@ -73,7 +69,6 @@ class PhotoDecisionStore: ObservableObject {
         let wasArchived = archivedPhotoIDs.contains(photoID)
         trashedPhotoIDs.insert(photoID)
         archivedPhotoIDs.remove(photoID) // Remove from archive if it was there
-        // Invalidate cached storage if photo was archived (affects total archived storage)
         if wasArchived {
             totalArchivedStorage = 0
         }
@@ -85,7 +80,6 @@ class PhotoDecisionStore: ObservableObject {
         let wasArchived = archivedPhotoIDs.contains(photoID)
         archivedPhotoIDs.remove(photoID)
         trashedPhotoIDs.remove(photoID)
-        // Invalidate cached storage if photo was archived (affects total archived storage)
         if wasArchived {
             totalArchivedStorage = 0
         }
@@ -116,8 +110,6 @@ class PhotoDecisionStore: ObservableObject {
     }
 
     /// Determines if a photo has been reviewed (either archived or trashed).
-    /// A photo is considered "reviewed" once the user has made a decision about it,
-    /// regardless of whether it was kept (archived) or deleted (trashed).
     func isReviewed(_ photoID: String) -> Bool {
         isArchived(photoID) || isTrashed(photoID)
     }
@@ -147,7 +139,6 @@ class PhotoDecisionStore: ObservableObject {
 
     private func load() {
         guard FileManager.default.fileExists(atPath: fileURL.path) else {
-            // No existing file, start fresh
             return
         }
 

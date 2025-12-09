@@ -140,7 +140,6 @@ struct TrashGridView: View {
         // Validate and cleanup orphaned IDs before loading (async, non-blocking)
         Task {
             await decisionStore.validateAndCleanup()
-            // Reload after validation completes
             await MainActor.run {
                 let trashedIDs = decisionStore.trashedPhotoIDs
                 loadPhotosAfterValidation(trashedIDs: trashedIDs)
@@ -170,7 +169,6 @@ struct TrashGridView: View {
 
         // Clean up orphaned IDs from decision store
         if !result.orphanedIDs.isEmpty {
-            // Remove orphaned IDs from the decision store
             for orphanedID in result.orphanedIDs {
                 decisionStore.restore(orphanedID) // This removes it from both archived and trashed
             }
@@ -181,7 +179,6 @@ struct TrashGridView: View {
 
     private func restorePhoto(_ asset: PHAsset) {
         decisionStore.restore(asset.localIdentifier)
-        // Reload to update the view immediately
         loadTrashedPhotos()
     }
 
@@ -189,7 +186,6 @@ struct TrashGridView: View {
         for asset in trashedPhotos {
             decisionStore.restore(asset.localIdentifier)
         }
-        // Reload to update the view immediately
         loadTrashedPhotos()
     }
 

@@ -393,7 +393,7 @@ struct GuideView: View {
                 }
                 .padding(.top, 25)
             }
-            .frame(maxWidth: maxContentWidth) // Constrain width for centered, readable content
+            .frame(maxWidth: maxContentWidth) 
             Spacer()
         }
         .frame(maxWidth: .infinity)

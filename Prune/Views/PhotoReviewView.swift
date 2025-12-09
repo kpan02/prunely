@@ -33,11 +33,6 @@ struct PhotoReviewView: View {
     @State private var isHidingReviewed = false // Default: show all photos
     @State private var thumbnailCache: [String: NSImage] = [:]
     @State private var preloadedImages: [String: NSImage] = [:]
-    /// Workaround to force SwiftUI view updates when computed properties depend on mutable state.
-    /// Since `currentAsset` is computed from `allPhotos` and `PHAsset` properties don't trigger
-    /// automatic view updates, changing this UUID forces recomputation of dependent properties
-    /// like `isCurrentPhotoFavorited`. This is a known limitation when working with immutable
-    /// snapshot objects from the Photos framework.
     @State private var refreshTrigger = UUID()
 
     init(albumTitle: String, photos: [PHAsset], photoLibrary: PhotoLibraryManager, decisionStore: PhotoDecisionStore) {
@@ -837,10 +832,8 @@ struct PhotoReviewView: View {
 
         let keepIDs = Set(photos[startIndex ... endIndex].map { $0.localIdentifier })
 
-        // Remove images outside the window to free memory
         preloadedImages = preloadedImages.filter { keepIDs.contains($0.key) }
 
-        // Also clean up thumbnail cache with a larger window (thumbnails are smaller)
         cleanupThumbnailCache(aroundIndex: currentIndex, in: photos)
 
         // Preload next 3 images for smooth forward navigation
@@ -865,7 +858,6 @@ struct PhotoReviewView: View {
     }
 
     private func cleanupThumbnailCache(aroundIndex: Int, in photos: [PHAsset]) {
-        // Keep a larger window for thumbnails since they're smaller (100 before, 100 after)
         let thumbnailWindowBefore = 100
         let thumbnailWindowAfter = 100
         let startIdx = max(0, aroundIndex - thumbnailWindowBefore)
@@ -873,7 +865,6 @@ struct PhotoReviewView: View {
 
         let keepThumbnailIds = Set(photos[startIdx ... endIdx].map { $0.localIdentifier })
 
-        // Remove thumbnails outside the window to free memory
         thumbnailCache = thumbnailCache.filter { keepThumbnailIds.contains($0.key) }
     }
 

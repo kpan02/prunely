@@ -128,7 +128,7 @@ struct DashboardView: View {
                     photoLibrary: photoLibrary,
                     decisionStore: decisionStore
                 )
-                .frame(width: 816) // 400 + 16 + 400
+                .frame(width: 816) 
 
                 Spacer()
             }
@@ -142,7 +142,7 @@ struct DashboardView: View {
                     photoLibrary: photoLibrary,
                     decisionStore: decisionStore
                 )
-                .frame(width: 816) // 400 + 16 + 400
+                .frame(width: 816) 
 
                 Spacer()
             }
@@ -155,7 +155,7 @@ struct DashboardView: View {
                 PhotoCountChartView(
                     photoLibrary: photoLibrary
                 )
-                .frame(width: 816) // 400 + 16 + 400
+                .frame(width: 816) 
 
                 Spacer()
             }

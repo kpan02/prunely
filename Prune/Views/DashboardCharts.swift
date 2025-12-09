@@ -154,7 +154,7 @@ struct ProgressHeatmapView: View {
             }
 
             // Fill in empty months for all year-month combinations
-            let sortedYears = Array(yearSet).sorted(by: >) // Reverse chronological order (most recent first)
+            let sortedYears = Array(yearSet).sorted(by: >)
             for year in sortedYears {
                 for month in 1 ... 12 {
                     let key = "\(year)-\(String(format: "%02d", month))"
@@ -164,7 +164,6 @@ struct ProgressHeatmapView: View {
                 }
             }
 
-            // Capture final values before MainActor.run
             let finalMonthData = finalData
             let finalYears = sortedYears
 
@@ -424,7 +423,6 @@ struct PhotoCountChartView: View {
     private func calculateData() {
         isLoading = true
 
-        // Capture values before entering background task
         let currentViewMode = viewMode
         let currentSelectedYear = selectedYear
 
