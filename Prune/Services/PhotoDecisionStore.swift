@@ -8,6 +8,7 @@
 import Foundation
 import Photos
 import Combine
+import OSLog
 
 struct PhotoDecisions: Codable {
     var archivedPhotoIDs: Set<String>
@@ -38,10 +39,13 @@ class PhotoDecisionStore: ObservableObject {
     @Published private(set) var totalArchivedStorage: Int64 = 0
     
     private let fileURL: URL
+    private let logger = Logger(subsystem: "com.prune.app", category: "PhotoDecisionStore")
     
     init() {
         // Set up file path: ~/Library/Application Support/Prune/decisions.json
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            fatalError("Unable to access Application Support directory")
+        }
         let pruneFolder = appSupport.appendingPathComponent("Prune")
         self.fileURL = pruneFolder.appendingPathComponent("decisions.json")
         
@@ -131,7 +135,7 @@ class PhotoDecisionStore: ObservableObject {
             let data = try encoder.encode(decisions)
             try data.write(to: fileURL, options: .atomic)
         } catch {
-            print("Failed to save decisions: \(error)")
+            logger.error("Failed to save decisions: \(error.localizedDescription, privacy: .public)")
         }
     }
     
@@ -153,7 +157,7 @@ class PhotoDecisionStore: ObservableObject {
             self.totalStorageFreed = decisions.totalStorageFreed ?? 0
             self.totalArchivedStorage = decisions.totalArchivedStorage ?? 0
         } catch {
-            print("Failed to load decisions: \(error)")
+            logger.error("Failed to load decisions: \(error.localizedDescription, privacy: .public). Starting fresh.")
             // Start fresh if file is corrupted
         }
     }

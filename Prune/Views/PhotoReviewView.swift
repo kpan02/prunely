@@ -8,6 +8,7 @@
 import SwiftUI
 import Photos
 import AppKit
+import OSLog
 
 struct PhotoReviewView: View {
     let albumTitle: String
@@ -16,6 +17,8 @@ struct PhotoReviewView: View {
     
     // All photos in the album (not pre-filtered)
     private let allPhotos: [PHAsset]
+    
+    private static let logger = Logger(subsystem: "com.prune.app", category: "PhotoReviewView")
     
     @Environment(\.dismiss) private var dismiss
     // Track current photo by ID instead of index for stability
@@ -717,7 +720,7 @@ struct PhotoReviewView: View {
         let timeoutTask = DispatchWorkItem {
             DispatchQueue.main.async {
                 if self.currentPhotoId == assetId && self.currentImage == nil && !self.imageLoadFailed {
-                    print("Image load timeout for asset: \(assetId)")
+                    Self.logger.warning("Image load timeout for asset: \(assetId, privacy: .public)")
                     self.imageLoadFailed = true
                     self.isLoading = false
                 }
@@ -739,7 +742,7 @@ struct PhotoReviewView: View {
                     self.imageLoadFailed = false
                     self.preloadNextImages()
                 } else {
-                    print("Failed to load image for asset: \(assetId)")
+                    Self.logger.error("Failed to load image for asset: \(assetId, privacy: .public)")
                     self.imageLoadFailed = true
                 }
             }

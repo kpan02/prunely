@@ -170,9 +170,18 @@ struct ArchiveGridView: View {
             // Calculate storage for all photos
             for asset in archivedPhotos {
                 let resources = PHAssetResource.assetResources(for: asset)
-                if let resource = resources.first,
-                let unsignedInt64 = resource.value(forKey: "fileSize") as? CLong {
-                    storage += Int64(unsignedInt64)
+                guard let resource = resources.first,
+                      let fileSizeValue = resource.value(forKey: "fileSize") else { continue }
+                
+                // Try multiple type conversions for fileSize (can be NSNumber, Int, Int64, etc.)
+                if let number = fileSizeValue as? NSNumber {
+                    storage += number.int64Value
+                } else if let intValue = fileSizeValue as? Int {
+                    storage += Int64(intValue)
+                } else if let int64Value = fileSizeValue as? Int64 {
+                    storage += int64Value
+                } else if let uint64Value = fileSizeValue as? UInt64 {
+                    storage += Int64(uint64Value)
                 }
             }
             

@@ -7,6 +7,7 @@ import Photos
 import PhotosUI
 import Combine
 import AppKit
+import OSLog
 
 struct MonthAlbum: Identifiable {
     let id: String
@@ -32,6 +33,7 @@ class PhotoLibraryManager: NSObject, ObservableObject, PHPhotoLibraryChangeObser
     
     private let imageManager = PHCachingImageManager()
     private var albumPhotosCache: [String: [PHAsset]] = [:]
+    private let logger = Logger(subsystem: "com.prune.app", category: "PhotoLibraryManager")
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
@@ -215,7 +217,7 @@ class PhotoLibraryManager: NSObject, ObservableObject, PHPhotoLibraryChangeObser
         ) { image, info in
             // Check for errors
             if let error = info?[PHImageErrorKey] as? Error {
-                print("Error loading image: \(error.localizedDescription)")
+                self.logger.error("Error loading image: \(error.localizedDescription, privacy: .public)")
                 completion(nil)
                 return
             }
@@ -243,8 +245,17 @@ class PhotoLibraryManager: NSObject, ObservableObject, PHPhotoLibraryChangeObser
         let resources = PHAssetResource.assetResources(for: asset)
         guard let resource = resources.first else { return nil }
         
-        if let unsignedInt64 = resource.value(forKey: "fileSize") as? CLong {
-            return Int64(unsignedInt64)
+        // Try multiple type conversions for fileSize (can be NSNumber, Int, Int64, etc.)
+        if let fileSizeValue = resource.value(forKey: "fileSize") {
+            if let number = fileSizeValue as? NSNumber {
+                return number.int64Value
+            } else if let intValue = fileSizeValue as? Int {
+                return Int64(intValue)
+            } else if let int64Value = fileSizeValue as? Int64 {
+                return int64Value
+            } else if let uint64Value = fileSizeValue as? UInt64 {
+                return Int64(uint64Value)
+            }
         }
         return nil
     }
@@ -281,7 +292,7 @@ class PhotoLibraryManager: NSObject, ObservableObject, PHPhotoLibraryChangeObser
             request.isFavorite = !asset.isFavorite
         }, completionHandler: { success, error in
             if let error = error {
-                print("Failed to toggle favorite: \(error.localizedDescription)")
+                self.logger.error("Failed to toggle favorite: \(error.localizedDescription, privacy: .public)")
             }
             DispatchQueue.main.async {
                 completion(success)

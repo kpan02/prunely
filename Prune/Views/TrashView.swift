@@ -5,11 +5,14 @@
 
 import SwiftUI
 import Photos
+import OSLog
 
 struct TrashGridView: View {
     @ObservedObject var photoLibrary: PhotoLibraryManager
     @ObservedObject var decisionStore: PhotoDecisionStore
     let columns: [GridItem]
+    
+    private static let logger = Logger(subsystem: "com.prune.app", category: "TrashView")
     
     @State private var trashedPhotos: [PHAsset] = []
     @State private var totalStorage: Int64 = 0
@@ -217,7 +220,7 @@ struct TrashGridView: View {
                     decisionStore.emptyTrash(photosDeleted: photosDeleted, storageFreed: storageFreed)
                 }
             } else if let error = error {
-                print("Error deleting photos: \(error.localizedDescription)")
+                Self.logger.error("Error deleting photos: \(error.localizedDescription, privacy: .public)")
             }
         })
     }
