@@ -9,7 +9,7 @@ import Photos
 struct ContentView: View {
     @StateObject private var photoLibrary = PhotoLibraryManager()
     @StateObject private var decisionStore = PhotoDecisionStore()
-    @State private var selectedTab: SidebarTab = .media
+    @State private var selectedTab: SidebarTab = .help
     
     var body: some View {
         NavigationStack {

@@ -11,8 +11,21 @@ struct Sidebar: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            // Guide Section
+            SidebarSectionHeader(title: "Guide")
+            
+            VStack(spacing: 2) {
+                ForEach(SidebarTab.guideTabs, id: \.self) { tab in
+                    SidebarItem(tab: tab, isSelected: selectedTab == tab) {
+                        selectedTab = tab
+                    }
+                }
+            }
+            .padding(.horizontal, 10)
+            
             // Library Section
             SidebarSectionHeader(title: "Library")
+                .padding(.top, 20)
             
             VStack(spacing: 2) {
                 ForEach(SidebarTab.libraryTabs, id: \.self) { tab in
@@ -42,22 +55,6 @@ struct Sidebar: View {
             
             Spacer()
             
-            // Reset button at bottom (for testing)
-            Button {
-                decisionStore.resetAll()
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "arrow.counterclockwise")
-                        .font(.system(size: 12))
-                    Text("Reset All")
-                        .font(.system(size: 13))
-                }
-                .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 16)
-            .padding(.bottom, 16)
-            .help("Clear all decisions (archived & trashed)")
         }
         .padding(.top, 12)
         .frame(width: 180)

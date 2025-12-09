@@ -30,11 +30,17 @@ enum SidebarTab: String, CaseIterable {
     
     var section: SidebarSection {
         switch self {
+        case .help:
+            return .guide
         case .media, .albums, .months:
             return .library
-        case .trash, .dashboard, .archive, .help:
+        case .trash, .dashboard, .archive:
             return .utilities
         }
+    }
+    
+    static var guideTabs: [SidebarTab] {
+        allCases.filter { $0.section == .guide }
     }
     
     static var libraryTabs: [SidebarTab] {
@@ -47,6 +53,7 @@ enum SidebarTab: String, CaseIterable {
 }
 
 enum SidebarSection: String {
+    case guide = "Guide"
     case library = "Library"
     case utilities = "Utilities"
 }

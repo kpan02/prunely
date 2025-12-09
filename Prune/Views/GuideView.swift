@@ -28,9 +28,15 @@ struct GuideView: View {
     private let bulletToTextSpacing: CGFloat = 8
     private let bulletListSpacing: CGFloat = 10
 
+    // Divider
+    private let dividerPadding: CGFloat = 6
+    
+    // App Features Container Spacing
+    private let appFeaturesSectionSpacing: CGFloat = 25
+
     // Layout
     private let maxContentWidth: CGFloat = 700
-    private let logoSize: CGFloat = 120
+    private let logoSize: CGFloat = 130
     
     var body: some View {
         HStack {
@@ -82,11 +88,11 @@ struct GuideView: View {
                 }
                 
                 // Container for App Features
-                VStack(alignment: .leading, spacing: sectionSpacing) {
+                VStack(alignment: .leading, spacing: appFeaturesSectionSpacing) {
                 // Header 
                 HStack {
                     Spacer()
-                    Text("App Features")
+                    Text("Key Features")
                         .font(.system(size: 28, weight: .semibold))
                     Spacer()
                 }
@@ -133,6 +139,10 @@ struct GuideView: View {
                     }
                     .padding(.leading, 0)
                 }
+                
+                // Divider
+                Divider()
+                    .padding(.horizontal, dividerPadding)
                 
                 // Photo Review Mode
                 VStack(alignment: .leading, spacing: sectionInternalSpacing) {
@@ -184,6 +194,15 @@ struct GuideView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         .padding(.leading, bulletSecondaryIndent)
+
+                        HStack(alignment: .firstTextBaseline, spacing: bulletToTextSpacing) {
+                            Text("↪")
+                                .font(.system(size: bodyTextSize))
+                            Text("Once you review a photo, that decision is remembered everywhere it appears (across all albums and views)")
+                                .font(.system(size: bodyTextSize))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(.leading, bulletSecondaryIndent)
                         
                         HStack(alignment: .firstTextBaseline, spacing: bulletToTextSpacing) {
                             Text("•")
@@ -214,6 +233,10 @@ struct GuideView: View {
                     }
                     .padding(.leading, 0)
                 }
+                
+                // Divider
+                Divider()
+                    .padding(.horizontal, dividerPadding)
                 
                 // Managing Your Decisions
                 VStack(alignment: .leading, spacing: sectionInternalSpacing) {
@@ -309,6 +332,10 @@ struct GuideView: View {
                     .padding(.leading, subsectionIndent)
                 }
                 
+                // Divider
+                Divider()
+                    .padding(.horizontal, dividerPadding)
+                
                 // Dashboard
                 VStack(alignment: .leading, spacing: sectionInternalSpacing) {
                     HStack(spacing: 8) {
@@ -371,7 +398,7 @@ struct GuideView: View {
                     }
                     .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(.top, 40)
+                .padding(.top, 25)
 
             }
             .frame(maxWidth: maxContentWidth) // Constrain width for centered, readable content

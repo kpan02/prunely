@@ -842,6 +842,7 @@ struct FilmstripThumbnail: View {
     let isSelected: Bool
     let decisionStatus: DecisionStatus?
     let thumbnail: NSImage?
+    @State private var isHovered = false
     
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -889,6 +890,14 @@ struct FilmstripThumbnail: View {
                             .foregroundStyle(.white)
                     )
                     .offset(x: 4, y: -4)
+            }
+        }
+        .onHover { hovering in
+            isHovered = hovering
+            if hovering {
+                NSCursor.pointingHand.push()
+            } else {
+                NSCursor.pop()
             }
         }
     }
