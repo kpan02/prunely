@@ -102,9 +102,9 @@ struct SidebarItem: View {
                         .font(.system(size: 14))
                         .frame(width: 20)
                 } else {
-                    Image(systemName: tab.icon)
-                        .font(.system(size: 14))
-                        .frame(width: 20)
+                Image(systemName: tab.icon)
+                    .font(.system(size: 14))
+                    .frame(width: 20)
                 }
                 Text(tab.rawValue)
                     .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
