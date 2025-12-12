@@ -17,6 +17,7 @@ struct TrashGridView: View {
     @State private var trashedPhotos: [PHAsset] = []
     @State private var totalStorage: Int64 = 0
     @State private var isLoading = true
+    @State private var isCalculatingStorage = false
     @State private var showEmptyTrashConfirmation = false
     @State private var showRestoreAllConfirmation = false
     @State private var selectedPhoto: PHAsset?
@@ -36,7 +37,12 @@ struct TrashGridView: View {
                     if !isLoading {
                         HStack(spacing: 8) {
                             Text("\(photoCount) \(photoCount == 1 ? "photo" : "photos")")
-                            if totalStorage > 0 {
+                            if isCalculatingStorage {
+                                Text("•")
+                                    .foregroundStyle(.secondary.opacity(0.5))
+                                Text("Calculating...")
+                                    .foregroundStyle(.secondary.opacity(0.7))
+                            } else if totalStorage > 0 {
                                 Text("•")
                                     .foregroundStyle(.secondary.opacity(0.5))
                                 Text(ByteCountFormatter.formatFileSize(totalStorage))
@@ -158,15 +164,6 @@ struct TrashGridView: View {
         let result = photoLibrary.fetchPhotos(byIDs: trashedIDs)
         trashedPhotos = result.photos
 
-        // Calculate total storage
-        var storage: Int64 = 0
-        for asset in trashedPhotos {
-            if let fileSize = photoLibrary.getFileSize(for: asset) {
-                storage += fileSize
-            }
-        }
-        totalStorage = storage
-
         // Clean up orphaned IDs from decision store
         if !result.orphanedIDs.isEmpty {
             for orphanedID in result.orphanedIDs {
@@ -175,6 +172,48 @@ struct TrashGridView: View {
         }
 
         isLoading = false
+
+        // Calculate storage async on background thread
+        if !trashedPhotos.isEmpty {
+            calculateStorageAsync()
+        }
+    }
+
+    private func calculateStorageAsync() {
+        guard !trashedPhotos.isEmpty else { return }
+
+        isCalculatingStorage = true
+
+        // Calculate storage on background thread
+        Task.detached(priority: .userInitiated) { [trashedPhotos] in
+            var storage: Int64 = 0
+
+            // Calculate storage for all photos
+            for asset in trashedPhotos {
+                let resources = PHAssetResource.assetResources(for: asset)
+                guard let resource = resources.first,
+                      let fileSizeValue = resource.value(forKey: "fileSize") else { continue }
+
+                // Try multiple type conversions for fileSize (can be NSNumber, Int, Int64, etc.)
+                if let number = fileSizeValue as? NSNumber {
+                    storage += number.int64Value
+                } else if let intValue = fileSizeValue as? Int {
+                    storage += Int64(intValue)
+                } else if let int64Value = fileSizeValue as? Int64 {
+                    storage += int64Value
+                } else if let uint64Value = fileSizeValue as? UInt64 {
+                    storage += Int64(uint64Value)
+                }
+            }
+
+            let finalStorage = storage
+
+            // Update on main thread
+            await MainActor.run {
+                self.totalStorage = finalStorage
+                self.isCalculatingStorage = false
+            }
+        }
     }
 
     private func restorePhoto(_ asset: PHAsset) {
